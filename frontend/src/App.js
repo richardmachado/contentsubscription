@@ -84,6 +84,8 @@ function ProtectedRoute({ token, children }) {
   return token ? children : <Navigate to="/" />;
 }
 
+
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(token ? jwtDecode(token) : null);
