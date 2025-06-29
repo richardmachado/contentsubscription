@@ -1,0 +1,155 @@
+.container {
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+
+.tab-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.tab-buttons button {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 10px 20px;
+  margin: 0 5px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: 0.3s;
+}
+
+.tab-buttons .active-tab {
+  background-color: #4caf50;
+  color: white;
+}
+
+.content-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.content-box {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.view-button {
+  background-color: #ccc;
+  color: #333;
+  border: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.buy-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.buy-button:hover {
+  background-color: #45a049;
+}
+.admin-nav {
+  margin: 10px 0;
+  background: #333;
+  padding: 10px;
+  text-align: right;
+}
+
+.admin-nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.navbar {
+  display: flex;
+  gap: 1rem;
+  background: #333;
+  padding: 0.5rem 1rem;
+  color: white;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.logout-button {
+  margin-left: auto;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #e60000;
+}
+
+/* Center the login form */
+.container {
+  max-width: 400px;
+  margin: 80px auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.container h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.container input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.container button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 1rem;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.container button:hover {
+  background-color: #45a049;
+}
+
+.container p {
+  margin-top: 1rem;
+  color: #d00;
+}

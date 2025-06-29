@@ -1,0 +1,138 @@
+.container {
+  padding: 20px;
+  font-family: sans-serif;
+  position: relative;
+  transition: filter 0.3s ease;
+}
+
+.blurred {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-button {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tab-buttons {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.tab-buttons button {
+  padding: 8px 16px;
+  border: none;
+  background: #ddd;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+.tab-buttons .active-tab {
+  background: #4caf50;
+  color: white;
+}
+
+.content-box {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #f9f9f9;
+}
+
+.content-box.alt {
+  background: #eef6ff;
+  border-color: #b3d7ff;
+}
+
+.view-button,
+.buy-button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.view-button {
+  background: #4caf50;
+  color: white;
+}
+
+.buy-button {
+  background: #ff9800;
+  color: white;
+}
+
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.profile-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 11;
+}
+
+.profile-modal input {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.profile-modal button {
+  padding: 8px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.confirmation-modal {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  animation: fadeinout 5s ease-in-out forwards;
+  z-index: 12;
+  font-weight: bold;
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+}
