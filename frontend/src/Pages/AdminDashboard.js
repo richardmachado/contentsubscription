@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import "../AdminDashboard.css";
 
 export default function AdminDashboard({ token }) {
@@ -6,8 +6,8 @@ export default function AdminDashboard({ token }) {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const res = await fetch('http://localhost:5000/api/admin/users', {
-        headers: { Authorization: 'Bearer ' + token },
+      const res = await fetch("http://localhost:5000/api/admin/users", {
+        headers: { Authorization: "Bearer " + token },
       });
       const data = await res.json();
       setUsers(data);
@@ -31,12 +31,14 @@ export default function AdminDashboard({ token }) {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.map((user) => (
               <tr key={user.id}>
                 <td>{user.username}</td>
-                <td>{user.name?.trim() ? user.name : 'Not set'}</td>
-                <td>{user.phone?.trim() ? user.phone : 'Not set'}</td>
-                <td>{(user.purchased || []).filter(Boolean).join(', ') || 'None'}</td>
+                <td>{user.name?.trim() ? user.name : "Not set"}</td>
+                <td>{user.phone?.trim() ? user.phone : "Not set"}</td>
+                <td>
+                  {(user.purchased || []).filter(Boolean).join(", ") || "None"}
+                </td>
               </tr>
             ))}
           </tbody>

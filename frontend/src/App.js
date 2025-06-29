@@ -1,54 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
   useNavigate,
-  Link
-} from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
-import Dashboard from './Pages/Dashboard';
-import AdminDashboard from './Pages/AdminDashboard';
-import './App.css';
+  Link,
+} from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import Dashboard from "./Pages/Dashboard";
+import AdminDashboard from "./Pages/AdminDashboard";
+import "./App.css";
 
 function Login({ setToken, setUser }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
   const navigate = useNavigate();
 
   const login = async () => {
-  const res = await fetch('http://localhost:5000/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  });
-  const data = await res.json();
-  if (data.success) {
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
-    const decoded = jwtDecode(data.token);
-    console.log('Decoded JWT:', decoded); // for debugging
-    setUser(decoded);
+    const res = await fetch("http://localhost:5000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+      const decoded = jwtDecode(data.token);
+      console.log("Decoded JWT:", decoded); // for debugging
+      setUser(decoded);
 
-    // 👇 Redirect based on admin status
-    if (decoded.is_admin) {
-      navigate('/admin-dashboard');
+      // 👇 Redirect based on admin status
+      if (decoded.is_admin) {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
-      navigate('/dashboard');
+      setMsg(data.error || "Login failed");
     }
-  } else {
-    setMsg(data.error || 'Login failed');
-  }
-};
-
+  };
 
   return (
     <div className="container">
       <h2>Login</h2>
-      <input placeholder="Username" onChange={e => setUsername(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} />
+      <input
+        placeholder="Username"
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value)}
+      />
       <button onClick={login}>Login</button>
       <p>{msg}</p>
     </div>
@@ -57,9 +63,9 @@ function Login({ setToken, setUser }) {
 
 function Subscribe({ token }) {
   const goToCheckout = async () => {
-    const res = await fetch('http://localhost:5000/api/checkout', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token },
+    const res = await fetch("http://localhost:5000/api/checkout", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token },
     });
 
     const data = await res.json();
@@ -79,7 +85,7 @@ function ProtectedRoute({ token, children }) {
 }
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(token ? jwtDecode(token) : null);
 
   useEffect(() => {
@@ -89,8 +95,8 @@ function App() {
         setUser(decoded);
       } catch (e) {
         setUser(null);
-        setToken('');
-        localStorage.removeItem('token');
+        setToken("");
+        localStorage.removeItem("token");
       }
     }
   }, [token]);
@@ -100,15 +106,25 @@ function App() {
       <nav className="navbar">
         <Link to="/dashboard">Dashboard</Link>
         {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
-        {token && <Link to="/" onClick={() => {
-          setToken('');
-          setUser(null);
-          localStorage.removeItem('token');
-        }}>Logout</Link>}
+        {token && (
+          <Link
+            to="/"
+            onClick={() => {
+              setToken("");
+              setUser(null);
+              localStorage.removeItem("token");
+            }}
+          >
+            Logout
+          </Link>
+        )}
       </nav>
 
       <Routes>
-        <Route path="/" element={<Login setToken={setToken} setUser={setUser} />} />
+        <Route
+          path="/"
+          element={<Login setToken={setToken} setUser={setUser} />}
+        />
         <Route
           path="/dashboard"
           element={

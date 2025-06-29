@@ -37,7 +37,7 @@
   padding: 15px;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .view-button {
@@ -50,7 +50,7 @@
 }
 
 .buy-button {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -137,7 +137,7 @@
   width: 100%;
   padding: 10px;
   margin-top: 1rem;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   font-size: 1rem;
   border: none;
