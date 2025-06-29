@@ -14,7 +14,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 // 🔥 Raw body must come BEFORE bodyParser
 app.use('/webhook', express.raw({ type: 'application/json' }));
 
-// Normal middlewares
+// Normal middleware
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
@@ -163,7 +163,7 @@ function authenticateToken(req, res, next) {
 }
 
 
-// Admin route to get users and purchases
+// Admin route that returns users along with a list of purchased content titles
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     const userQuery = `
@@ -181,22 +181,6 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
-
-
-
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'Missing token' });
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded.is_admin) return res.status(403).json({ error: 'Not an admin' });
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-}
 
 // Route to get all users and their purchased content
 
