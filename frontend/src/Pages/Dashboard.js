@@ -3,9 +3,16 @@ import "../Dashboard.css";
 import ContentTabs from "../Components/ContentTabs";
 import ProfileModal from "../Components/ProfileModal";
 
-import { fetchContent, fetchProfile, updateProfile as saveProfile } from "../utils/api";
+import {
+  fetchContent,
+  fetchProfile,
+  updateProfile as saveProfile,
+} from "../utils/api";
 
-export default function Dashboard({ token, setToken }) {
+import { useAuth } from "../context/AuthContext";
+
+export default function Dashboard() {
+  const { logout } = useAuth();
   const [items, setItems] = useState([]);
   const [tab, setTab] = useState("purchased");
   const [showModal, setShowModal] = useState(false);
@@ -16,8 +23,8 @@ export default function Dashboard({ token, setToken }) {
     const loadData = async () => {
       try {
         const [fetchedItems, fetchedProfile] = await Promise.all([
-          fetchContent(token),
-          fetchProfile(token),
+          fetchContent(),
+          fetchProfile(),
         ]);
         setItems(fetchedItems);
         setProfile(fetchedProfile);
@@ -26,21 +33,16 @@ export default function Dashboard({ token, setToken }) {
       }
     };
     loadData();
-  }, [token]);
+  }, []);
 
   const updateProfile = async () => {
     try {
-      await saveProfile(token, profile);
+      await saveProfile(profile);
       setConfirmation(true);
       setTimeout(() => setConfirmation(false), 5000);
     } catch (err) {
       console.error("Profile update failed:", err);
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken("");
   };
 
   const purchased = items.filter((i) => i.purchased);

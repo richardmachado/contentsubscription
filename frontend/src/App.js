@@ -1,74 +1,39 @@
-import { useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  // useNavigate,
-  Link,
-} from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import Dashboard from "./Pages/Dashboard";
 import AdminDashboard from "./Pages/AdminDashboard";
-
 import Subscribe from "./Components/Subscribe";
 import Login from "./Components/Login";
 import ProtectedRoute from "./Components/ProtectedRoute";
 
 import "./App.css";
 
-
-
-
-
-
-function App() {
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
-  const [user, setUser] = useState(token ? jwtDecode(token) : null);
-
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUser(decoded);
-      } catch (e) {
-        setUser(null);
-        setToken("");
-        localStorage.removeItem("token");
-      }
-    }
-  }, [token]);
+function Navigation() {
+  const { user, logout } = useAuth();
 
   return (
-    <Router>
-      <nav className="navbar">
-        <Link to="/dashboard">Dashboard</Link>
-        {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
-        {token && (
-          <Link
-            to="/"
-            onClick={() => {
-              setToken("");
-              setUser(null);
-              localStorage.removeItem("token");
-            }}
-          >
-            Logout
-          </Link>
-        )}
-      </nav>
+    <nav className="navbar">
+      <Link to="/dashboard">Dashboard</Link>
+      {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
+      {user && <Link to="/" onClick={logout}>Logout</Link>}
+    </nav>
+  );
+}
 
+function AppRoutes() {
+  const { token, user, login } = useAuth();
+
+  return (
+    <>
+      <Navigation />
       <Routes>
-        <Route
-          path="/"
-          element={<Login setToken={setToken} setUser={setUser} />}
-        />
+        <Route path="/" element={<Login setToken={login} />} />
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute token={token}>
-              <Dashboard token={token} setToken={setToken} />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -76,23 +41,27 @@ function App() {
           path="/subscribe"
           element={
             <ProtectedRoute token={token}>
-              <Subscribe token={token} />
+              <Subscribe />
             </ProtectedRoute>
           }
         />
         <Route
           path="/admin-dashboard"
           element={
-            user?.is_admin ? (
-              <AdminDashboard token={token} />
-            ) : (
-              <Navigate to="/dashboard" />
-            )
+            user?.is_admin ? <AdminDashboard /> : <Navigate to="/dashboard" />
           }
         />
       </Routes>
-    </Router>
+    </>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
+  );
+}

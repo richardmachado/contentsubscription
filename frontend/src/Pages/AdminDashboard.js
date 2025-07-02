@@ -1,25 +1,39 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { fetchAdminUsers } from "../utils/api";
+
 import "../AdminDashboard.css";
 
-export default function AdminDashboard({ token }) {
+export default function AdminDashboard() {
+  const { token } = useAuth();
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await fetch("http://localhost:5000/api/admin/users", {
-        headers: { Authorization: "Bearer " + token },
-      });
-      const data = await res.json();
-      setUsers(data);
+    if (!token) return;
+
+    const loadUsers = async () => {
+      try {
+        const data = await fetchAdminUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchUsers();
+
+    loadUsers();
   }, [token]);
 
   return (
     <div className="container">
       <h2>User Purchase Overview</h2>
-      {users.length === 0 ? (
+      {loading ? (
         <p>Loading users...</p>
+      ) : users.length === 0 ? (
+        <p>No users found.</p>
       ) : (
         <table className="user-table">
           <thead>

@@ -1,35 +1,51 @@
 // utils/api.js
+import axios from "axios";
 
-export async function fetchContent(token) {
-  const res = await fetch("http://localhost:5000/api/content", {
-    headers: { Authorization: "Bearer " + token },
-  });
-  if (!res.ok) throw new Error("Failed to fetch content");
-  return await res.json();
+const BASE_URL = "http://localhost:5000/api";
+
+
+// Create a reusable Axios instance
+const api = axios.create({
+  baseURL: BASE_URL,
+});
+
+// Interceptor to attach token to each request
+export function setAuthToken(token) {
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common["Authorization"];
+  }
 }
 
-export async function fetchProfile(token) {
-  const res = await fetch("http://localhost:5000/api/profile", {
-    headers: { Authorization: "Bearer " + token },
-  });
-  if (!res.ok) throw new Error("Failed to fetch profile");
-  const data = await res.json();
+// Fetch content items
+export async function fetchContent() {
+  const res = await api.get("/content");
+  return res.data;
+}
+
+// Fetch user profile
+export async function fetchProfile() {
+  const res = await api.get("/profile");
   return {
-    name: data.name || "",
-    phone: data.phone || "",
+    name: res.data.name || "",
+    phone: res.data.phone || "",
   };
 }
 
-export async function updateProfile(token, profile) {
-  const res = await fetch("http://localhost:5000/api/profile", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(profile),
-  });
-  const data = await res.json();
-  if (!data.success) throw new Error(data.error || "Failed to update profile");
-  return data;
+// Update user profile
+export async function updateProfile(profile) {
+  const res = await api.post("/profile", profile);
+  if (!res.data.success) throw new Error(res.data.error || "Profile update failed");
+  return res.data;
+}
+
+// Existing fetchContent, fetchProfile, updateProfile...
+
+export async function fetchAdminUsers() {
+  const res = await api.get("/admin/users");
+  if (!Array.isArray(res.data)) {
+    throw new Error("Expected an array of users");
+  }
+  return res.data;
 }

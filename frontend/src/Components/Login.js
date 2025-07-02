@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
-export default function Login({ setToken, setUser }) {
+function Login({ setToken }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -16,18 +16,9 @@ export default function Login({ setToken, setUser }) {
     });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem("token", data.token);
       setToken(data.token);
       const decoded = jwtDecode(data.token);
-      console.log("Decoded JWT:", decoded); // for debugging
-      setUser(decoded);
-
-      // 👇 Redirect based on admin status
-      if (decoded.is_admin) {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate(decoded.is_admin ? "/admin-dashboard" : "/dashboard");
     } else {
       setMsg(data.error || "Login failed");
     }
@@ -36,17 +27,12 @@ export default function Login({ setToken, setUser }) {
   return (
     <div className="container">
       <h2>Login</h2>
-      <input
-        placeholder="Username"
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
+      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
       <button onClick={login}>Login</button>
       <p>{msg}</p>
     </div>
   );
 }
+
+export default Login;
