@@ -27,8 +27,15 @@ function Login({ setToken }) {
   return (
     <div className="container">
       <h2>Login</h2>
-      <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+      <input
+        placeholder="Username"
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value)}
+      />
       <button onClick={login}>Login</button>
       <p>{msg}</p>
     </div>

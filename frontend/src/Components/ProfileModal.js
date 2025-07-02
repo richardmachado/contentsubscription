@@ -21,7 +21,9 @@ export default function ProfileModal({
             <input
               placeholder="Phone Number"
               value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
             />
             <button onClick={updateProfile}>Save</button>
             <button onClick={logout}>Logout</button>

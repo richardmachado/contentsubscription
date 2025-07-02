@@ -1,4 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+} from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import Dashboard from "./Pages/Dashboard";
@@ -16,7 +22,11 @@ function Navigation() {
     <nav className="navbar">
       <Link to="/dashboard">Dashboard</Link>
       {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
-      {user && <Link to="/" onClick={logout}>Logout</Link>}
+      {user && (
+        <Link to="/" onClick={logout}>
+          Logout
+        </Link>
+      )}
     </nav>
   );
 }

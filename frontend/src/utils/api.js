@@ -3,7 +3,6 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:5000/api";
 
-
 // Create a reusable Axios instance
 const api = axios.create({
   baseURL: BASE_URL,
@@ -36,7 +35,8 @@ export async function fetchProfile() {
 // Update user profile
 export async function updateProfile(profile) {
   const res = await api.post("/profile", profile);
-  if (!res.data.success) throw new Error(res.data.error || "Profile update failed");
+  if (!res.data.success)
+    throw new Error(res.data.error || "Profile update failed");
   return res.data;
 }
 
