@@ -50,6 +50,7 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+  console.log("Trying to log in", { username, password });
   const user = result.rows[0];
   if (!user) return res.status(401).json({ success: false, error: "User not found" });
   const match = await bcrypt.compare(password, user.password);
@@ -189,3 +190,16 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}
+
+console.log("DB user:", user);
+console.log("Password match:", await bcrypt.compare(password, user?.password));
+
+
+module.exports = app; // 👈 for Supertest
