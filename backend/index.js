@@ -2,8 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt"); 
 const jwt = require("jsonwebtoken");
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const bodyParser = require("body-parser");
 
@@ -50,7 +51,7 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-  console.log("Trying to log in", { username, password });
+  // console.log("Trying to log in", { username, password });
   const user = result.rows[0];
   if (!user) return res.status(401).json({ success: false, error: "User not found" });
   const match = await bcrypt.compare(password, user.password);
@@ -138,7 +139,7 @@ app.post("/webhook", async (req, res) => {
         "INSERT INTO purchased_content (user_id, content_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         [userId, contentId]
       );
-      console.log(`✅ User ${userId} purchased content ${contentId}`);
+     
     } catch (err) {
       console.error("Database error:", err);
     }
@@ -184,7 +185,7 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
-});
+});console
 
 // Start server
 app.listen(port, () => {
@@ -198,8 +199,8 @@ if (require.main === module) {
   });
 }
 
-console.log("DB user:", user);
-console.log("Password match:", await bcrypt.compare(password, user?.password));
+// .log("DB user:", user);
+// console.log("Password match:", await bcrypt.compare(password, user?.password));
 
 
 module.exports = app; // 👈 for Supertest

@@ -35,28 +35,42 @@ export default function AdminDashboard() {
       ) : users.length === 0 ? (
         <p>No users found.</p>
       ) : (
-        <table className="user-table">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Full Name</th>
-              <th>Phone</th>
-              <th>Purchased Items</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.username}</td>
-                <td>{user.name?.trim() ? user.name : "Not set"}</td>
-                <td>{user.phone?.trim() ? user.phone : "Not set"}</td>
-                <td>
-                  {(user.purchased || []).filter(Boolean).join(", ") || "None"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="user-card-container">
+          {users.map((user) => {
+            const hasPurchases = user.purchased?.filter(Boolean).length > 0;
+
+            return (
+              <div
+                key={user.id}
+                className={`user-card ${!hasPurchases ? "no-purchases" : ""}`}
+              >
+                <h3>{user.username}</h3>
+                <p>
+                  <strong>Full Name:</strong> {user.name?.trim() || "Not set"}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {user.phone?.trim() || "Not set"}
+                </p>
+                <p>
+                  <strong>Purchased Items:</strong>
+                </p>
+                <div className="chip-group">
+                  {hasPurchases ? (
+                    user.purchased.filter(Boolean).map((item, index) => (
+                      <span key={index} className="status-chip">
+                        {item}
+                      </span>
+                    ))
+                  ) : (
+                    <div className="no-purchases-chip-wrapper">
+                      <span className="status-chip none">None</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

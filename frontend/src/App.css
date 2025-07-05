@@ -79,7 +79,7 @@
 .navbar {
   display: flex;
   gap: 1rem;
-  background: #333;
+  background: teal;
   padding: 0.5rem 1rem;
   color: white;
 }
@@ -91,6 +91,11 @@
 
 .navbar a:hover {
   text-decoration: underline;
+}
+
+.admin-navbar {
+  background-color: #800020; /* Admin = Burgundy */
+  box-shadow: 0 0 10px gold;
 }
 
 .logout-button {

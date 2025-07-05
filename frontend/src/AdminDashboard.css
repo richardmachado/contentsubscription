@@ -1,16 +1,134 @@
+.container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  color: #333;
+}
+
 .user-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .user-table th,
 .user-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
+  padding: 1rem;
   text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 .user-table th {
-  background-color: #f0f0f0;
+  background-color: #eee;
+  color: #333;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.user-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.user-table td {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.status-chip {
+  background-color: #dfefff;
+  color: #0047ab;
+  padding: 0.3rem 0.6rem;
+  margin: 0.1rem;
+  border-radius: 20px;
+  display: inline-block;
+  font-size: 0.8rem;
+}
+.user-card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.user-card {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  width: 280px;
+  transition: transform 0.2s ease;
+}
+
+.user-card:hover {
+  transform: scale(1.02);
+}
+
+.user-card h3 {
+  margin-bottom: 0.5rem;
+  color: #800020; /* Burgundy */
+}
+
+.user-card p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.chip-group {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.status-chip {
+  background-color: #dfefff;
+  color: #0047ab;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.status-chip.none {
+  background-color: #eee;
+  color: #777;
+}
+
+/* Highlight cards with no purchases */
+.user-card.no-purchases {
+  border: 1px solid #ffaaaa;
+  background-color: #fff5f5;
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.08);
+}
+
+.user-card.no-purchases h3::after {
+  content: " 🚫";
+  font-size: 1rem;
+  margin-left: 0.3rem;
+}
+
+.no-purchases-chip-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.status-chip.none {
+  background-color: #ff4d4d; /* Brighter red */
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(255, 77, 77, 0.3);
 }

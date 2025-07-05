@@ -17,9 +17,10 @@ import "./App.css";
 
 function Navigation() {
   const { user, logout } = useAuth();
+  const navClass = user?.is_admin ? "navbar admin-navbar" : "navbar";
 
   return (
-    <nav className="navbar">
+    <nav className={navClass}>
       <Link to="/dashboard">Dashboard</Link>
       {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
       {user && (
