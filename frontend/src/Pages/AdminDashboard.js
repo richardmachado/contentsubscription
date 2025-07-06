@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { fetchAdminUsers } from "../utils/api";
-
 import "../AdminDashboard.css";
 
 export default function AdminDashboard() {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("non-payers");
 
   useEffect(() => {
     if (!token) return;
@@ -27,16 +27,42 @@ export default function AdminDashboard() {
     loadUsers();
   }, [token]);
 
+  const nonPayers = users.filter(
+    (user) => !user.purchased || user.purchased.filter(Boolean).length === 0
+  );
+
+  const payers = users.filter(
+    (user) => user.purchased && user.purchased.filter(Boolean).length > 0
+  );
+
+  const displayedUsers = activeTab === "non-payers" ? nonPayers : payers;
+
   return (
     <div className="container">
       <h2>User Purchase Overview</h2>
+
+    <div className="tabs">
+  <button
+    className={`tab ${activeTab === "non-payers" ? "active non-payers" : ""}`}
+    onClick={() => setActiveTab("non-payers")}
+  >
+    🚫 Non-Payers ({nonPayers.length})
+  </button>
+  <button
+    className={`tab ${activeTab === "payers" ? "active payers" : ""}`}
+    onClick={() => setActiveTab("payers")}
+  >
+    💸 Payers ({payers.length})
+  </button>
+</div>
+
       {loading ? (
         <p>Loading users...</p>
-      ) : users.length === 0 ? (
-        <p>No users found.</p>
+      ) : displayedUsers.length === 0 ? (
+        <p>No users found in this tab.</p>
       ) : (
         <div className="user-card-container">
-          {users.map((user) => {
+          {displayedUsers.map((user) => {
             const hasPurchases = user.purchased?.filter(Boolean).length > 0;
 
             return (
@@ -45,21 +71,13 @@ export default function AdminDashboard() {
                 className={`user-card ${!hasPurchases ? "no-purchases" : ""}`}
               >
                 <h3>{user.username}</h3>
-                <p>
-                  <strong>Full Name:</strong> {user.name?.trim() || "Not set"}
-                </p>
-                <p>
-                  <strong>Phone:</strong> {user.phone?.trim() || "Not set"}
-                </p>
-                <p>
-                  <strong>Purchased Items:</strong>
-                </p>
+                <p><strong>Full Name:</strong> {user.name?.trim() || "Not set"}</p>
+                <p><strong>Phone:</strong> {user.phone?.trim() || "Not set"}</p>
+                <p><strong>Purchased Items:</strong></p>
                 <div className="chip-group">
                   {hasPurchases ? (
                     user.purchased.filter(Boolean).map((item, index) => (
-                      <span key={index} className="status-chip">
-                        {item}
-                      </span>
+                      <span key={index} className="status-chip">{item}</span>
                     ))
                   ) : (
                     <div className="no-purchases-chip-wrapper">
