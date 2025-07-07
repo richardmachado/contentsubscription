@@ -147,3 +147,20 @@
     transform: translateX(-50%) translateY(20px);
   }
 }
+
+.error-text {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin: 0.3rem 0;
+}
+
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+input[type="tel"] {
+  font-family: monospace;
+  letter-spacing: 1px;
+}

@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState("purchased");
   const [showModal, setShowModal] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [confirmation, setConfirmation] = useState(false);
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -35,15 +35,6 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const updateProfile = async () => {
-    try {
-      await saveProfile(profile);
-      setConfirmation(true);
-      setTimeout(() => setConfirmation(false), 5000);
-    } catch (err) {
-      console.error("Profile update failed:", err);
-    }
-  };
 
   const purchased = items.filter((i) => i.purchased);
   const unpurchased = items.filter((i) => !i.purchased);
@@ -68,16 +59,10 @@ export default function Dashboard() {
         <ProfileModal
           profile={profile}
           setProfile={setProfile}
-          updateProfile={updateProfile}
+          updateProfile={saveProfile}
           logout={logout}
           onClose={() => setShowModal(false)}
         />
-      )}
-
-      {confirmation && (
-        <div className="confirmation-modal">
-          ✅ Profile updated successfully!
-        </div>
       )}
     </div>
   );

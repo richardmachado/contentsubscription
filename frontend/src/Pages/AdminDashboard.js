@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { fetchAdminUsers } from "../utils/api";
+import { fetchAdminUsers, setAuthToken } from "../utils/api";
 import "../AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -11,6 +11,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!token) return;
+
+    setAuthToken(token);
 
     const loadUsers = async () => {
       try {
@@ -28,11 +30,11 @@ export default function AdminDashboard() {
   }, [token]);
 
   const nonPayers = users.filter(
-    (user) => !user.purchased || user.purchased.filter(Boolean).length === 0
+    (user) => !user.purchased || user.purchased.filter(Boolean).length === 0,
   );
 
   const payers = users.filter(
-    (user) => user.purchased && user.purchased.filter(Boolean).length > 0
+    (user) => user.purchased && user.purchased.filter(Boolean).length > 0,
   );
 
   const displayedUsers = activeTab === "non-payers" ? nonPayers : payers;
@@ -41,20 +43,20 @@ export default function AdminDashboard() {
     <div className="container">
       <h2>User Purchase Overview</h2>
 
-    <div className="tabs">
-  <button
-    className={`tab ${activeTab === "non-payers" ? "active non-payers" : ""}`}
-    onClick={() => setActiveTab("non-payers")}
-  >
-    🚫 Non-Payers ({nonPayers.length})
-  </button>
-  <button
-    className={`tab ${activeTab === "payers" ? "active payers" : ""}`}
-    onClick={() => setActiveTab("payers")}
-  >
-    💸 Payers ({payers.length})
-  </button>
-</div>
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "non-payers" ? "active non-payers" : ""}`}
+          onClick={() => setActiveTab("non-payers")}
+        >
+          🚫 Non-Payers ({nonPayers.length})
+        </button>
+        <button
+          className={`tab ${activeTab === "payers" ? "active payers" : ""}`}
+          onClick={() => setActiveTab("payers")}
+        >
+          💸 Payers ({payers.length})
+        </button>
+      </div>
 
       {loading ? (
         <p>Loading users...</p>
@@ -71,13 +73,24 @@ export default function AdminDashboard() {
                 className={`user-card ${!hasPurchases ? "no-purchases" : ""}`}
               >
                 <h3>{user.username}</h3>
-                <p><strong>Full Name:</strong> {user.name?.trim() || "Not set"}</p>
-                <p><strong>Phone:</strong> {user.phone?.trim() || "Not set"}</p>
-                <p><strong>Purchased Items:</strong></p>
+                <p>
+                  <strong>Email:</strong> {user.email || "Not set"}
+                </p>
+                <p>
+                  <strong>Full Name:</strong> {user.name?.trim() || "Not set"}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {user.phone?.trim() || "Not set"}
+                </p>
+                <p>
+                  <strong>Purchased Items:</strong>
+                </p>
                 <div className="chip-group">
                   {hasPurchases ? (
                     user.purchased.filter(Boolean).map((item, index) => (
-                      <span key={index} className="status-chip">{item}</span>
+                      <span key={index} className="status-chip">
+                        {item}
+                      </span>
                     ))
                   ) : (
                     <div className="no-purchases-chip-wrapper">

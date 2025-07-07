@@ -29,6 +29,7 @@ export async function fetchProfile() {
   return {
     name: res.data.name || "",
     phone: res.data.phone || "",
+    email: res.data.email || "",
   };
 }
 
@@ -49,3 +50,5 @@ export async function fetchAdminUsers() {
   }
   return res.data;
 }
+
+

@@ -38,7 +38,7 @@ app.post("/api/register", async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
+      "INSERT INTO users (username, password, email, is_admin) VALUES ($1, $2, $3)",
       [username, hash, is_admin]
     );
     res.json({ success: true });
@@ -65,13 +65,18 @@ app.post("/api/login", async (req, res) => {
 
 // Get and update profile
 app.get("/api/profile", auth, async (req, res) => {
-  const result = await pool.query("SELECT name, phone FROM users WHERE id = $1", [req.user.id]);
+  const result = await pool.query("SELECT name, phone , email FROM users WHERE id = $1", [req.user.id]);
   res.json(result.rows[0] || {});
 });
 
 app.post("/api/profile", auth, async (req, res) => {
-  const { name, phone } = req.body;
-  await pool.query("UPDATE users SET name = $1, phone = $2 WHERE id = $3", [name, phone, req.user.id]);
+  
+  const { name, phone, email } = req.body;  
+  const digitsOnly = phone.replace(/\D/g, "");
+if (!/^\d{10}$/.test(digitsOnly)) {
+  return res.status(400).json({ error: "Invalid phone number format" });
+}
+  await pool.query("UPDATE users SET name = $1, phone = $2 , email = $3 WHERE id = $4", [name, phone, email, req.user.id]);
   res.json({ success: true });
 });
 
@@ -172,7 +177,7 @@ function authenticateToken(req, res, next) {
 app.get("/api/admin/users", authenticateToken, async (req, res) => {
   try {
     const userQuery = `
-      SELECT u.id, u.username, u.name, u.phone, 
+      SELECT u.id, u.username, u.name, u.phone, u.email,
         COALESCE(json_agg(c.title) FILTER (WHERE c.title IS NOT NULL), '[]') AS purchased
       FROM users u
       LEFT JOIN purchased_content pc ON u.id = pc.user_id
