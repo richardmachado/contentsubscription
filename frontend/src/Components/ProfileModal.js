@@ -33,10 +33,11 @@ export default function ProfileModal({
   const [form, setForm] = useState(
     profile || { email: "", name: "", phone: "" },
   );
-  //const [dirty, setDirty] = useState(false);
+  
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [shakeField, setShakeField] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -47,7 +48,6 @@ export default function ProfileModal({
     };
     setForm(resetForm);
     initial.current = resetForm;
-
     setErrorMsg("");
   }, [profile]);
 
@@ -56,39 +56,40 @@ export default function ProfileModal({
     setForm(next);
   };
 
-  const handleSave = async () => {
-    const emailVal = form.email || "";
-    const phoneVal = form.phone || "";
-    const digits = phoneVal.replace(/\D/g, "");
-    const validEmail = isValidEmail(emailVal);
-    const validPhone = isValidPhone(phoneVal);
+ const handleSave = async () => {
+  if (!isValidEmail(form.email) || !isValidPhone(form.phone) || !nameValid) {
+    const fieldToShake = !isValidEmail(form.email)
+      ? "email"
+      : !isValidPhone(form.phone)
+      ? "phone"
+      : "name";
+    setShakeField(fieldToShake);
+    setErrorMsg("Invalid info was not saved! Please fix errors and try again.");
+    setTimeout(() => setShakeField(null), 500);
+    return;
+  }
 
-    if (!validEmail || !validPhone || !nameValid) {
-      const fieldToShake = !validEmail
-        ? "email"
-        : !validPhone
-          ? "phone"
-          : "name";
-      setShakeField(fieldToShake);
-      setErrorMsg(
-        "Invalid info was not saved! Please fix errors and try again.",
-      );
-      setTimeout(() => setShakeField(null), 500);
-      return;
-    }
+  setIsSaving(true); // 🚫 Disable button
+  try {
+    const emailVal = form.email.trim();
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    await updateProfile({
+      email: emailVal,
+      name: form.name.trim(),
+      phone: phoneDigits,
+    });
+    setProfile({ email: emailVal, name: form.name, phone: form.phone });
+    setSaveSuccess(true);
+    setErrorMsg("");
+    setTimeout(() => setSaveSuccess(false), 3000);
+  } catch (err) {
+    console.error("Save failed", err);
+    setErrorMsg("Failed to save profile. Please try again.");
+  } finally {
+    setIsSaving(false); // ✅ Re-enable button
+  }
+};
 
-    try {
-      await updateProfile({ email: emailVal, name: form.name, phone: digits });
-
-      setProfile({ email: emailVal, name: form.name, phone: form.phone || "" });
-
-      setSaveSuccess(true);
-      setErrorMsg("");
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
-      setErrorMsg("Failed to save profile. Please try again.");
-    }
-  };
 
   if (!profile) {
     return (
@@ -148,9 +149,10 @@ export default function ProfileModal({
         )}
 
         <div className="button-row">
-          <button type="button" onClick={handleSave}>
-            Save
-          </button>
+          <button type="button" onClick={handleSave} disabled={isSaving}>
+  {isSaving ? "Saving..." : "Save"}
+</button>
+
           <button type="button" onClick={logout}>
             Logout
           </button>

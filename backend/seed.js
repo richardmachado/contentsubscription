@@ -10,8 +10,20 @@ const pool = new Pool({
 
 const seed = async () => {
   const users = [
-    { username: 'alice', password: 'password123', paid: true, name: 'Alice Johnson', phone: '555-111-2222' },
-    { username: 'bob', password: 'mypassword', paid: false, name: 'Bob Smith', phone: '555-333-4444' },
+    {
+      username: 'alice',
+      password: 'password123',
+      paid: true,
+      name: 'Alice Johnson',
+      phone: '555-111-2222',
+    },
+    {
+      username: 'bob',
+      password: 'mypassword',
+      paid: false,
+      name: 'Bob Smith',
+      phone: '555-333-4444',
+    },
   ];
 
   for (const user of users) {

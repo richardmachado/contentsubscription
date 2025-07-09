@@ -3,6 +3,34 @@ import { useAuth } from "../context/AuthContext";
 import { fetchAdminUsers, setAuthToken } from "../utils/api";
 import "../AdminDashboard.css";
 
+// 🕒 Helper function to format "time ago"
+function formatTimeAgo(timestamp) {
+  const now = new Date();
+  const then = new Date(timestamp);
+  const seconds = Math.floor((now - then) / 1000);
+
+  if (isNaN(seconds)) return "Invalid Date";
+
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "week", seconds: 604800 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 },
+    { label: "second", seconds: 1 },
+  ];
+
+  for (const i of intervals) {
+    const count = Math.floor(seconds / i.seconds);
+    if (count > 0) {
+      return `${count} ${i.label}${count !== 1 ? "s" : ""} ago`;
+    }
+  }
+
+  return "just now";
+}
+
 export default function AdminDashboard() {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
@@ -30,11 +58,11 @@ export default function AdminDashboard() {
   }, [token]);
 
   const nonPayers = users.filter(
-    (user) => !user.purchased || user.purchased.filter(Boolean).length === 0,
+    (user) => !user.purchased || user.purchased.filter(Boolean).length === 0
   );
 
   const payers = users.filter(
-    (user) => user.purchased && user.purchased.filter(Boolean).length > 0,
+    (user) => user.purchased && user.purchased.filter(Boolean).length > 0
   );
 
   const displayedUsers = activeTab === "non-payers" ? nonPayers : payers;
@@ -87,10 +115,13 @@ export default function AdminDashboard() {
                 </p>
                 <div className="chip-group">
                   {hasPurchases ? (
-                    user.purchased.filter(Boolean).map((item, index) => (
-                      <span key={index} className="status-chip">
-                        {item}
-                      </span>
+                    user.purchased.filter(Boolean).map((purchase, index) => (
+                      <div key={index} className="purchase-detail">
+                        <span className="status-chip">{purchase.item}</span>
+                        <div className="timestamp">
+                          🕒 {formatTimeAgo(purchase.timestamp)}
+                        </div>
+                      </div>
                     ))
                   ) : (
                     <div className="no-purchases-chip-wrapper">
