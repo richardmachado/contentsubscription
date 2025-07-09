@@ -50,5 +50,3 @@ export async function fetchAdminUsers() {
   }
   return res.data;
 }
-
-

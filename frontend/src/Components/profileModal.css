@@ -1,0 +1,25 @@
+.confirmation-banner {
+  background-color: #e0ffe0;
+  border: 1000px solid #4caf50;
+  color: #256029;
+  padding: 8px 12px;
+  margin: 0 0 12px;   /* bottom spacing in flow */
+  border-radius: 4px;
+  text-align: center;
+  position: relative; /* stays inline in modal content */
+  z-index: 10;        /* sits above form fields if overlapping */
+}
+
+.confirmation-modal {
+  position: relative;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  animation: fadeinout 5s ease-in-out forwards;
+  z-index: 12;
+  font-weight: bold;
+}

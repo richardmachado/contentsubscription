@@ -18,7 +18,6 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [profile, setProfile] = useState(null);
 
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -35,7 +34,6 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-
   const purchased = items.filter((i) => i.purchased);
   const unpurchased = items.filter((i) => !i.purchased);
 
@@ -43,6 +41,7 @@ export default function Dashboard() {
     <div className="container">
       <div className="header">
         <h2>Premium Content</h2>
+
         <button className="profile-button" onClick={() => setShowModal(true)}>
           ⚙️
         </button>

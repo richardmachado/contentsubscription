@@ -5,7 +5,12 @@ import { setAuthToken } from "../utils/api";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [token, setToken] = useState(() => {
+    const stored = localStorage.getItem("token");
+    setAuthToken(stored); // ✅ set immediately on load
+    return stored || "";
+  });
+
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -13,8 +18,8 @@ export function AuthProvider({ children }) {
       try {
         const decoded = jwtDecode(token);
         setUser(decoded);
-        setAuthToken(token); // Set token in Axios globally
         localStorage.setItem("token", token);
+        setAuthToken(token); // ✅ ensure it's set on token change too
       } catch (err) {
         console.error("Invalid token:", err);
         logout();

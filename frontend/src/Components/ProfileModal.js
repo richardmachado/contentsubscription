@@ -1,29 +1,100 @@
-import { useState} from "react";
-
-// --- Utils ---
+import { useState, useRef, useEffect } from "react";
+import "./profileModal.css";
 function formatPhone(value) {
-  const digits = value.replace(/\D/g, "").substring(0, 10);
-  const areaCode = digits.substring(0, 3);
-  const middle = digits.substring(3, 6);
-  const last = digits.substring(6, 10);
-
-  if (digits.length > 6) return `(${areaCode}) ${middle}-${last}`;
-  if (digits.length > 3) return `(${areaCode}) ${middle}`;
-  if (digits.length > 0) return `(${areaCode}`;
+  const val = value || "";
+  const digits = val.replace(/\D/g, "").slice(0, 10);
+  const area = digits.slice(0, 3);
+  const mid = digits.slice(3, 6);
+  const last = digits.slice(6);
+  if (digits.length > 6) return `(${area}) ${mid}-${last}`;
+  if (digits.length > 3) return `(${area}) ${mid}`;
+  if (digits.length > 0) return `(${area}`;
   return "";
 }
 
 function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const val = email || "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 }
 
 function isValidPhone(phone) {
-  const digits = phone.replace(/\D/g, "");
-  return /^\d{10}$/.test(digits);
+  const val = phone || "";
+  return /^\d{10}$/.test(val.replace(/\D/g, ""));
 }
 
-export default function ProfileModal({ profile, setProfile, updateProfile, logout, onClose }) {
+export default function ProfileModal({
+  profile,
+  setProfile,
+  updateProfile,
+  logout,
+  onClose,
+}) {
+  const initial = useRef(profile || {});
+  const [form, setForm] = useState(profile || { email: "", name: "", phone: "" });
+  const [dirty, setDirty] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [shakeField, setShakeField] = useState(null);
+
+  useEffect(() => {
+    if (!profile) return;
+    const resetForm = {
+      email: profile.email || "",
+      name: profile.name || "",
+      phone: profile.phone || "",
+    };
+    setForm(resetForm);
+    initial.current = resetForm;
+    setDirty(false);
+    setErrorMsg("");
+   
+  }, [profile]);
+
+  const handleChange = (field, value) => {
+    const next = { ...form, [field]: value };
+    setForm(next);
+    const nowDirty = Object.keys(initial.current).some(
+      key => next[key] !== initial.current[key]
+    );
+    setDirty(nowDirty);
+  };
+
+  const handleSave = async () => {
+    console.log("🔍 handleSave called");
+    const emailVal = form.email || "";
+    const phoneVal = form.phone || "";
+    const digits = phoneVal.replace(/\D/g, "");
+    const validEmail = isValidEmail(emailVal);
+    const validPhone = isValidPhone(phoneVal);
+
+    console.log({ validEmail, validPhone });
+
+    if (!validEmail || !validPhone) {
+       console.log("🚫 Validation failed", { validEmail, validPhone });
+      const fieldToShake = !validEmail ? "email" : "phone";
+      setShakeField(fieldToShake);
+      setErrorMsg("Invalid info was not saved! Please fix errors and try again.");
+    console.log("errorMsg set to:", "Invalid info...");
+      setTimeout(() => setShakeField(null), 500);
+      return;
+    }
+console.log("✅ Validation passed, about to save");
+    try {
+      console.log("✏️ Saving profile", { email: emailVal, name: form.name, phone: digits });
+      await updateProfile({ email: emailVal, name: form.name, phone: digits });
+      console.log("🎉 Update successful");
+      setProfile({ email: emailVal, name: form.name, phone: form.phone || "" });
+      setDirty(false);
+      setSaveSuccess(true);
+      console.log("saveSuccess set to true");
+      setErrorMsg("");
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Save failed", err);
+      setErrorMsg("Failed to save profile. Please try again.");
+    }
+  };
+  
 
   if (!profile) {
     return (
@@ -36,85 +107,60 @@ export default function ProfileModal({ profile, setProfile, updateProfile, logou
     );
   }
 
-  const emailValid = isValidEmail(profile.email || "");
-  const phoneDigits = profile.phone.replace(/\D/g, "");
-  const phoneValid = isValidPhone(phoneDigits);
+  const emailValid = isValidEmail(form.email);
+  const phoneValid = isValidPhone(form.phone);
+  const canSave = dirty && emailValid && phoneValid;
 
-  // --- Update profile as user types ---
-  const handleChange = (field, value) => {
-    setProfile({ ...profile, [field]: value });
-  };
+  console.log("🔁 Render flags:", { dirty, emailValid, phoneValid, canSave, errorMsg });
 
   return (
     <div className="profile-modal-overlay">
       <div className="profile-modal">
         <h3>Edit Profile</h3>
 
-        {!profile ? (
-          <p>Loading...</p>
-        ) : (
-          <>
-            <input
-              placeholder="Email"
-              type="email"
-              value={profile.email || ""}
-              onChange={(e) => handleChange("email", e.target.value)}
-              required
-            />
-            {!emailValid && (
-              <p className="error-text">Please enter a valid email address.</p>
-            )}
+ {saveSuccess && (
+  <div
+    className="confirmation-modal"
+  >
+    ✅ Profile updated successfully!
+  </div>
+)}
+        {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
-            <input
-              placeholder="Full Name"
-              value={profile.name || ""}
-              onChange={(e) => handleChange("name", e.target.value)}
-            />
+        <input
+          className={`${!emailValid ? "invalid" : ""} ${shakeField === "email" ? "shake" : ""}`}
+          placeholder="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => handleChange("email", e.target.value)}
+        />
+        {!emailValid && <p className="error-text">Enter a valid email.</p>}
 
-            <input
-              placeholder="Phone Number"
-              value={profile.phone || ""}
-              onChange={(e) => {
-                const formatted = formatPhone(e.target.value);
-                handleChange("phone", formatted);
-              }}
-              required
-            />
-            {!phoneValid && (
-              <p className="error-text">Please enter a valid 10-digit phone number.</p>
-            )}
+        <input
+          placeholder="Full Name"
+          value={form.name || ""}
+          onChange={(e) => handleChange("name", e.target.value)}
+        />
 
-            <button
-              onClick={async () => {
-                if (!emailValid || !phoneValid) {
-                  alert("Fix errors before saving.");
-                  return;
-                }
+        <input
+          className={`${!phoneValid ? "invalid" : ""} ${shakeField === "phone" ? "shake" : ""}`}
+          placeholder="Phone Number"
+          value={form.phone}
+          onChange={(e) => handleChange("phone", formatPhone(e.target.value))}
+        />
+        {!phoneValid && <p className="error-text">Enter a 10-digit phone number.</p>}
 
-                const cleanProfile = {
-                  ...profile,
-                  phone: phoneDigits, // send stripped version
-                };
-
-                try {
-                  await updateProfile(cleanProfile);
-                  setSaveSuccess(true);
-                  setTimeout(() => setSaveSuccess(false), 3000);
-                } catch (err) {
-                  console.error("Failed to save profile:", err);
-                }
-              }}
-              disabled={!emailValid || !phoneValid}
-            >
-              Save {saveSuccess && <span className="checkmark">✅</span>}
-            </button>
-
-            <button onClick={logout}>Logout</button>
-          </>
-        )}
-
-        <button onClick={onClose}>Close</button>
+        <div className="button-row">
+          <button type="button" onClick={handleSave}>
+            Save
+          </button>
+          <button type="button" onClick={logout}>Logout</button>
+          <button type="button" onClick={onClose}>Close</button>
+        </div>
       </div>
+
+   
+
     </div>
   );
 }

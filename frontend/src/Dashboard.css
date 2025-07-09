@@ -99,6 +99,8 @@
   flex-direction: column;
   gap: 10px;
   z-index: 11;
+   position: relative; /* ensure it's a positioning context */
+  z-index: 1000;  
 }
 
 .profile-modal input {
@@ -117,7 +119,7 @@
 }
 
 .confirmation-modal {
-  position: fixed;
+  position: relative;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
@@ -164,3 +166,108 @@ input[type="tel"] {
   font-family: monospace;
   letter-spacing: 1px;
 }
+
+.error-text {
+  color: crimson;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.checkmark {
+  margin-left: 8px;
+  font-size: 1rem;
+}
+
+.invalid {
+  border: 2px solid #d32f2f;
+  background-color: #fff0f0;
+}
+
+.shake {
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.confirmation-modal {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 20;
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+}
+
+.animate-success {
+  animation: slideUpFade 3s ease-in-out forwards;
+}
+
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+
+.error-banner {
+  background: #fdd;
+  border: 1px solid #f99;
+  padding: 8px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  color: #900;
+}
+.invalid { border-color: #f00; }
+.shake { animation: shake 0.5s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,80% { transform: translateX(-5px); }
+  40%,60% { transform: translateX(5px); }
+}
+
+.confirmation-banner {
+  background-color: #e0ffe0;
+  border: 1000px solid #4caf50;
+  color: #256029;
+  padding: 8px 12px;
+  margin: 0 0 12px;   /* bottom spacing in flow */
+  border-radius: 4px;
+  text-align: center;
+  position: relative; /* stays inline in modal content */
+  z-index: 10;        /* sits above form fields if overlapping */
+}
+
