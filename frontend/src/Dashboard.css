@@ -99,8 +99,8 @@
   flex-direction: column;
   gap: 10px;
   z-index: 11;
-   position: relative; /* ensure it's a positioning context */
-  z-index: 1000;  
+  position: relative; /* ensure it's a positioning context */
+  z-index: 1000;
 }
 
 .profile-modal input {
@@ -251,12 +251,25 @@ input[type="tel"] {
   border-radius: 4px;
   color: #900;
 }
-.invalid { border-color: #f00; }
-.shake { animation: shake 0.5s; }
+.invalid {
+  border-color: #f00;
+}
+.shake {
+  animation: shake 0.5s;
+}
 @keyframes shake {
-  0%,100% { transform: translateX(0); }
-  20%,80% { transform: translateX(-5px); }
-  40%,60% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  80% {
+    transform: translateX(-5px);
+  }
+  40%,
+  60% {
+    transform: translateX(5px);
+  }
 }
 
 .confirmation-banner {
@@ -264,10 +277,9 @@ input[type="tel"] {
   border: 1000px solid #4caf50;
   color: #256029;
   padding: 8px 12px;
-  margin: 0 0 12px;   /* bottom spacing in flow */
+  margin: 0 0 12px; /* bottom spacing in flow */
   border-radius: 4px;
   text-align: center;
   position: relative; /* stays inline in modal content */
-  z-index: 10;        /* sits above form fields if overlapping */
+  z-index: 10; /* sits above form fields if overlapping */
 }
-

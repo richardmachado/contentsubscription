@@ -30,8 +30,10 @@ export default function ProfileModal({
   onClose,
 }) {
   const initial = useRef(profile || {});
-  const [form, setForm] = useState(profile || { email: "", name: "", phone: "" });
-  const [dirty, setDirty] = useState(false);
+  const [form, setForm] = useState(
+    profile || { email: "", name: "", phone: "" },
+  );
+  //const [dirty, setDirty] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [shakeField, setShakeField] = useState(null);
@@ -45,56 +47,48 @@ export default function ProfileModal({
     };
     setForm(resetForm);
     initial.current = resetForm;
-    setDirty(false);
+
     setErrorMsg("");
-   
   }, [profile]);
 
   const handleChange = (field, value) => {
     const next = { ...form, [field]: value };
     setForm(next);
-    const nowDirty = Object.keys(initial.current).some(
-      key => next[key] !== initial.current[key]
-    );
-    setDirty(nowDirty);
   };
 
   const handleSave = async () => {
-    console.log("🔍 handleSave called");
     const emailVal = form.email || "";
     const phoneVal = form.phone || "";
     const digits = phoneVal.replace(/\D/g, "");
     const validEmail = isValidEmail(emailVal);
     const validPhone = isValidPhone(phoneVal);
 
-    console.log({ validEmail, validPhone });
-
-    if (!validEmail || !validPhone) {
-       console.log("🚫 Validation failed", { validEmail, validPhone });
-      const fieldToShake = !validEmail ? "email" : "phone";
+    if (!validEmail || !validPhone || !nameValid) {
+      const fieldToShake = !validEmail
+        ? "email"
+        : !validPhone
+          ? "phone"
+          : "name";
       setShakeField(fieldToShake);
-      setErrorMsg("Invalid info was not saved! Please fix errors and try again.");
-    console.log("errorMsg set to:", "Invalid info...");
+      setErrorMsg(
+        "Invalid info was not saved! Please fix errors and try again.",
+      );
       setTimeout(() => setShakeField(null), 500);
       return;
     }
-console.log("✅ Validation passed, about to save");
+
     try {
-      console.log("✏️ Saving profile", { email: emailVal, name: form.name, phone: digits });
       await updateProfile({ email: emailVal, name: form.name, phone: digits });
-      console.log("🎉 Update successful");
+
       setProfile({ email: emailVal, name: form.name, phone: form.phone || "" });
-      setDirty(false);
+
       setSaveSuccess(true);
-      console.log("saveSuccess set to true");
       setErrorMsg("");
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error("Save failed", err);
       setErrorMsg("Failed to save profile. Please try again.");
     }
   };
-  
 
   if (!profile) {
     return (
@@ -109,22 +103,19 @@ console.log("✅ Validation passed, about to save");
 
   const emailValid = isValidEmail(form.email);
   const phoneValid = isValidPhone(form.phone);
-  const canSave = dirty && emailValid && phoneValid;
-
-  console.log("🔁 Render flags:", { dirty, emailValid, phoneValid, canSave, errorMsg });
+  const nameValid =
+    (form.name || "").trim().length > 0 && /^[^\d]+$/.test(form.name.trim());
 
   return (
     <div className="profile-modal-overlay">
       <div className="profile-modal">
         <h3>Edit Profile</h3>
 
- {saveSuccess && (
-  <div
-    className="confirmation-modal"
-  >
-    ✅ Profile updated successfully!
-  </div>
-)}
+        {saveSuccess && (
+          <div className="confirmation-modal">
+            ✅ Profile updated successfully!
+          </div>
+        )}
         {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
         <input
@@ -137,10 +128,14 @@ console.log("✅ Validation passed, about to save");
         {!emailValid && <p className="error-text">Enter a valid email.</p>}
 
         <input
+          className={`${!nameValid ? "invalid" : ""} ${shakeField === "name" ? "shake" : ""}`}
           placeholder="Full Name"
           value={form.name || ""}
           onChange={(e) => handleChange("name", e.target.value)}
         />
+        {!nameValid && (
+          <p className="error-text">Name cannot be empty or contain numbers.</p>
+        )}
 
         <input
           className={`${!phoneValid ? "invalid" : ""} ${shakeField === "phone" ? "shake" : ""}`}
@@ -148,19 +143,22 @@ console.log("✅ Validation passed, about to save");
           value={form.phone}
           onChange={(e) => handleChange("phone", formatPhone(e.target.value))}
         />
-        {!phoneValid && <p className="error-text">Enter a 10-digit phone number.</p>}
+        {!phoneValid && (
+          <p className="error-text">Enter a 10-digit phone number.</p>
+        )}
 
         <div className="button-row">
           <button type="button" onClick={handleSave}>
             Save
           </button>
-          <button type="button" onClick={logout}>Logout</button>
-          <button type="button" onClick={onClose}>Close</button>
+          <button type="button" onClick={logout}>
+            Logout
+          </button>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
-
-   
-
     </div>
   );
 }
