@@ -162,7 +162,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-input[type="tel"] {
+input[type='tel'] {
   font-family: monospace;
   letter-spacing: 1px;
 }

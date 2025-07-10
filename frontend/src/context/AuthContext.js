@@ -1,14 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-import { setAuthToken } from "../utils/api";
+import { createContext, useContext, useEffect, useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { setAuthToken } from '../utils/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => {
-    const stored = localStorage.getItem("token");
+    const stored = localStorage.getItem('token');
     setAuthToken(stored); // ✅ set immediately on load
-    return stored || "";
+    return stored || '';
   });
 
   const [user, setUser] = useState(null);
@@ -18,10 +18,10 @@ export function AuthProvider({ children }) {
       try {
         const decoded = jwtDecode(token);
         setUser(decoded);
-        localStorage.setItem("token", token);
+        localStorage.setItem('token', token);
         setAuthToken(token); // ✅ ensure it's set on token change too
       } catch (err) {
-        console.error("Invalid token:", err);
+        console.error('Invalid token:', err);
         logout();
       }
     }
@@ -32,9 +32,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    setToken("");
+    setToken('');
     setUser(null);
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
     setAuthToken(null);
   };
 

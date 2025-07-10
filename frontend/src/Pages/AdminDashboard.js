@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { fetchAdminUsers, setAuthToken } from "../utils/api";
-import "../AdminDashboard.css";
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { fetchAdminUsers, setAuthToken } from '../utils/api';
+import '../AdminDashboard.css';
 
 // 🕒 Helper function to format "time ago"
 function formatTimeAgo(timestamp) {
@@ -9,33 +9,33 @@ function formatTimeAgo(timestamp) {
   const then = new Date(timestamp);
   const seconds = Math.floor((now - then) / 1000);
 
-  if (isNaN(seconds)) return "Invalid Date";
+  if (isNaN(seconds)) return 'Invalid Date';
 
   const intervals = [
-    { label: "year", seconds: 31536000 },
-    { label: "month", seconds: 2592000 },
-    { label: "week", seconds: 604800 },
-    { label: "day", seconds: 86400 },
-    { label: "hour", seconds: 3600 },
-    { label: "minute", seconds: 60 },
-    { label: "second", seconds: 1 },
+    { label: 'year', seconds: 31536000 },
+    { label: 'month', seconds: 2592000 },
+    { label: 'week', seconds: 604800 },
+    { label: 'day', seconds: 86400 },
+    { label: 'hour', seconds: 3600 },
+    { label: 'minute', seconds: 60 },
+    { label: 'second', seconds: 1 },
   ];
 
   for (const i of intervals) {
     const count = Math.floor(seconds / i.seconds);
     if (count > 0) {
-      return `${count} ${i.label}${count !== 1 ? "s" : ""} ago`;
+      return `${count} ${i.label}${count !== 1 ? 's' : ''} ago`;
     }
   }
 
-  return "just now";
+  return 'just now';
 }
 
 export default function AdminDashboard() {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("non-payers");
+  const [activeTab, setActiveTab] = useState('non-payers');
 
   useEffect(() => {
     if (!token) return;
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
         const data = await fetchAdminUsers();
         setUsers(data);
       } catch (err) {
-        console.error("Failed to fetch users:", err);
+        console.error('Failed to fetch users:', err);
         setUsers([]);
       } finally {
         setLoading(false);
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
     (user) => user.purchased && user.purchased.filter(Boolean).length > 0
   );
 
-  const displayedUsers = activeTab === "non-payers" ? nonPayers : payers;
+  const displayedUsers = activeTab === 'non-payers' ? nonPayers : payers;
 
   return (
     <div className="container">
@@ -73,14 +73,14 @@ export default function AdminDashboard() {
 
       <div className="tabs">
         <button
-          className={`tab ${activeTab === "non-payers" ? "active non-payers" : ""}`}
-          onClick={() => setActiveTab("non-payers")}
+          className={`tab ${activeTab === 'non-payers' ? 'active non-payers' : ''}`}
+          onClick={() => setActiveTab('non-payers')}
         >
           🚫 Non-Payers ({nonPayers.length})
         </button>
         <button
-          className={`tab ${activeTab === "payers" ? "active payers" : ""}`}
-          onClick={() => setActiveTab("payers")}
+          className={`tab ${activeTab === 'payers' ? 'active payers' : ''}`}
+          onClick={() => setActiveTab('payers')}
         >
           💸 Payers ({payers.length})
         </button>
@@ -98,17 +98,17 @@ export default function AdminDashboard() {
             return (
               <div
                 key={user.id}
-                className={`user-card ${!hasPurchases ? "no-purchases" : ""}`}
+                className={`user-card ${!hasPurchases ? 'no-purchases' : ''}`}
               >
                 <h3>{user.username}</h3>
                 <p>
-                  <strong>Email:</strong> {user.email || "Not set"}
+                  <strong>Email:</strong> {user.email || 'Not set'}
                 </p>
                 <p>
-                  <strong>Full Name:</strong> {user.name?.trim() || "Not set"}
+                  <strong>Full Name:</strong> {user.name?.trim() || 'Not set'}
                 </p>
                 <p>
-                  <strong>Phone:</strong> {user.phone?.trim() || "Not set"}
+                  <strong>Phone:</strong> {user.phone?.trim() || 'Not set'}
                 </p>
                 <p>
                   <strong>Purchased Items:</strong>

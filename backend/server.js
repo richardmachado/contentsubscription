@@ -1,5 +1,5 @@
 require('dotenv').config();
-console.log('Stripe Secret Key:', process.env.STRIPE_SECRET);
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -25,7 +25,6 @@ app.use('/webhook', require('./routes/stripeWebhook'));
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
   });
 }
 

@@ -1,8 +1,8 @@
 export default function Subscribe({ token }) {
   const goToCheckout = async () => {
-    const res = await fetch("http://localhost:5000/api/checkout", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token },
+    const res = await fetch('http://localhost:5000/api/checkout', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
     });
 
     const data = await res.json();

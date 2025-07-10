@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-
 router.post('/', async (req, res) => {
   const stripe = require('stripe')(process.env.STRIPE_SECRET);
   const sig = req.headers['stripe-signature'];

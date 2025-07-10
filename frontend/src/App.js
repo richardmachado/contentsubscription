@@ -4,20 +4,20 @@ import {
   Route,
   Navigate,
   Link,
-} from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+} from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-import Dashboard from "./Pages/Dashboard";
-import AdminDashboard from "./Pages/AdminDashboard";
-import Subscribe from "./Components/Subscribe";
-import Login from "./Components/Login";
-import ProtectedRoute from "./Components/ProtectedRoute";
+import Dashboard from './Pages/Dashboard';
+import AdminDashboard from './Pages/AdminDashboard';
+import Subscribe from './Components/Subscribe';
+import Login from './Components/Login';
+import ProtectedRoute from './Components/ProtectedRoute';
 
-import "./App.css";
+import './App.css';
 
 function Navigation() {
   const { user, logout } = useAuth();
-  const navClass = user?.is_admin ? "navbar admin-navbar" : "navbar";
+  const navClass = user?.is_admin ? 'navbar admin-navbar' : 'navbar';
 
   return (
     <nav className={navClass}>
@@ -52,7 +52,7 @@ function AppRoutes() {
           path="/subscribe"
           element={
             <ProtectedRoute token={token}>
-              <Subscribe />
+              <Subscribe token={token} />
             </ProtectedRoute>
           }
         />

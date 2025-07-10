@@ -1,24 +1,26 @@
-import handlePurchase from "./HandlePurchase";
+import handlePurchase from './HandlePurchase';
+import { useAuth } from '../context/AuthContext';
 
 export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
+  const { token } = useAuth();
   return (
     <>
       <div className="tab-buttons">
         <button
-          className={tab === "purchased" ? "active-tab" : ""}
-          onClick={() => setTab("purchased")}
+          className={tab === 'purchased' ? 'active-tab' : ''}
+          onClick={() => setTab('purchased')}
         >
           Purchased
         </button>
         <button
-          className={tab === "explore" ? "active-tab" : ""}
-          onClick={() => setTab("explore")}
+          className={tab === 'explore' ? 'active-tab' : ''}
+          onClick={() => setTab('explore')}
         >
           Explore More
         </button>
       </div>
 
-      {tab === "purchased" ? (
+      {tab === 'purchased' ? (
         <div className="content-list">
           {purchased.length === 0 ? (
             <p>You haven’t purchased any content yet.</p>
@@ -29,7 +31,7 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
                 <p>{item.description}</p>
                 <button
                   className="view-button"
-                  onClick={() => alert("Enjoy your content!")}
+                  onClick={() => alert('Enjoy your content!')}
                 >
                   View
                 </button>
@@ -40,7 +42,7 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
       ) : (
         <div className="tab-content">
           {unpurchased.length === 0 ? (
-            <p style={{ fontStyle: "italic", color: "#888" }}>
+            <p style={{ fontStyle: 'italic', color: '#888' }}>
               🎉 You’ve purchased all current content. Stay tuned for new
               content coming soon!
             </p>
@@ -51,7 +53,7 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
                 <p>{item.description}</p>
                 <button
                   className="buy-button"
-                  onClick={() => handlePurchase(item.id)}
+                  onClick={() => handlePurchase(item.id, token)}
                 >
                   Buy for ${item.price / 100}
                 </button>

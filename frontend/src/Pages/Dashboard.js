@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
-import "../Dashboard.css";
-import ContentTabs from "../Components/ContentTabs";
-import ProfileModal from "../Components/ProfileModal";
+import { useEffect, useState } from 'react';
+import '../Dashboard.css';
+import ContentTabs from '../Components/ContentTabs';
+import ProfileModal from '../Components/ProfileModal';
 
 import {
   fetchContent,
   fetchProfile,
   updateProfile as saveProfile,
-} from "../utils/api";
+} from '../utils/api';
 
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { logout } = useAuth();
   const [items, setItems] = useState([]);
-  const [tab, setTab] = useState("purchased");
+  const [tab, setTab] = useState('purchased');
   const [showModal, setShowModal] = useState(false);
   const [profile, setProfile] = useState(null);
 
@@ -28,7 +28,7 @@ export default function Dashboard() {
         setItems(fetchedItems);
         setProfile(fetchedProfile);
       } catch (error) {
-        console.error("Error loading data:", error);
+        console.error('Error loading data:', error);
       }
     };
     loadData();
