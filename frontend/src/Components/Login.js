@@ -14,8 +14,10 @@ function Login({ setToken }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
+  
     const data = await res.json();
-    if (data.success) {
+  
+    if (data.token) {
       setToken(data.token);
       const decoded = jwtDecode(data.token);
       navigate(decoded.is_admin ? "/admin-dashboard" : "/dashboard");
