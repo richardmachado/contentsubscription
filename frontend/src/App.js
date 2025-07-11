@@ -11,7 +11,11 @@ import Dashboard from './Pages/Dashboard';
 import AdminDashboard from './Pages/AdminDashboard';
 import Subscribe from './Components/Subscribe';
 import Login from './Components/Login';
+import NodeGuide from './RealContent/NodeGuide';
 import ProtectedRoute from './Components/ProtectedRoute';
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
 
@@ -62,7 +66,9 @@ function AppRoutes() {
             user?.is_admin ? <AdminDashboard /> : <Navigate to="/dashboard" />
           }
         />
+        <Route path="/learn-node" element={<NodeGuide />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </>
   );
 }

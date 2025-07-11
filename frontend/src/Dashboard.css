@@ -283,3 +283,43 @@ input[type='tel'] {
   position: relative; /* stays inline in modal content */
   z-index: 10; /* sits above form fields if overlapping */
 }
+
+.free-content-card {
+  margin: 20px 0;
+}
+
+.free-guide-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.guide-card {
+  padding: 16px;
+  background-color: #e6ffe6;
+  border: 2px dashed #33aa33;
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.guide-card:hover {
+  background-color: #ccffcc;
+}
+
+.content-card {
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.content-card h3 {
+  margin-top: 0;
+}
+
+.content-card select {
+  margin-top: 5px;
+  padding: 5px;
+}
