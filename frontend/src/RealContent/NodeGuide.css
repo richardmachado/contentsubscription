@@ -1,12 +1,12 @@
 /* Container Themes */
 .node-guide-container.dark {
-  background: linear-gradient(135deg, #1e1e2f, #2c3e50);
-  color: #f5f5f5;
+  background-color: #1e1e2f;
+  color: #f0f0f0;
 }
 
 .node-guide-container.light {
-  background: linear-gradient(135deg, #f4f4f4, #ffffff);
-  color: #222;
+  background-color: #ffffff;
+  color: #000000;
 }
 
 /* Button Toggle */
@@ -85,4 +85,81 @@
 .node-guide-container.light .node-guide-content pre {
   background: #f8f8f8;
   color: #333;
+}
+
+/* Improve visibility and interactivity */
+.guide-card {
+  display: block;
+  background-color: var(--card-bg, #1e1e2f);
+  color: var(--card-text, #fff);
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  text-decoration: none;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.guide-card:hover {
+  transform: translateY(-3px);
+  background-color: var(--card-hover-bg, #2a2a40);
+}
+
+.node-guide-container.light .guide-card {
+  --card-bg: #f5f5f5;
+  --card-text: #111;
+  --card-hover-bg: #e0e0e0;
+}
+
+.node-guide-container.dark .guide-card {
+  --card-bg: #222b3c;
+  --card-text: #f0f0f0;
+  --card-hover-bg: #2e3c57;
+}
+
+/* Default styles (dark mode friendly) */
+.guide-card h3,
+.guide-card p {
+  color: var(--card-text, #f0f0f0);
+}
+
+/* Improve light mode contrast */
+.node-guide-container.light .guide-card h3,
+.node-guide-container.light .guide-card p {
+  color: #222 !important;
+}
+
+/* Headings */
+.node-guide-container.light h1,
+.node-guide-container.light h2,
+.node-guide-container.light h3 {
+  color: #000;
+}
+
+.node-guide-container.dark h1,
+.node-guide-container.dark h2,
+.node-guide-container.dark h3 {
+  color: #90ee90;
+}
+
+/* Cards */
+.guide-card {
+  background-color: #222b3c;
+  color: #f0f0f0;
+  padding: 1rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.3s, color 0.3s;
+}
+
+.node-guide-container.light .guide-card {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.guide-card:hover {
+  background-color: #333b4c;
+}
+.node-guide-container.light .guide-card:hover {
+  background-color: #f4f4f4;
 }

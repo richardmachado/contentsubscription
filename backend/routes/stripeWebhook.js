@@ -23,8 +23,8 @@ router.post('/', async (req, res) => {
 
     try {
       await pool.query(
-        'INSERT INTO purchased_content (user_id, content_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [userId, contentId]
+        'INSERT INTO purchased_content (user_id, content_id, quantity) VALUES ($1, $2, $3)',
+        [userId, contentId, safeQuantity]
       );
     } catch (err) {
       console.error('DB error:', err);

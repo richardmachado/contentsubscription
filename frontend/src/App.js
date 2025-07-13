@@ -18,6 +18,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
+import JSDataTypesGuide from './RealContent/JSDataTypes';
+import LandingPage from './Pages/LandingPage';
 
 function Navigation() {
   const { user, logout } = useAuth();
@@ -67,6 +69,9 @@ function AppRoutes() {
           }
         />
         <Route path="/learn-node" element={<NodeGuide />} />
+        <Route path="/data-types" element={<JSDataTypesGuide />} />
+        <Route path="/home" element={<LandingPage />} />
+
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </>

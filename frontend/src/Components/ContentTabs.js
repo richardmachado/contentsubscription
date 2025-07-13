@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import handlePurchase from './HandlePurchase';
+//import handlePurchase from './HandlePurchase';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
   const { token } = useAuth();
   const [quantities, setQuantities] = useState({});
+  const [loadingItemId, setLoadingItemId] = useState(null);
+
 
   const handleQuantityChange = (id, qty) => {
     setQuantities((prev) => ({
@@ -13,40 +16,65 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
     }));
   };
 
-  const handleBuy = async (item) => {
-    const quantity = quantities[item.id] || 1;
 
-    const res = await fetch(`http://localhost:5000/api/buy/${item.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+
+const handleBuy = async (item) => {
+  const quantity = quantities[item.id] || 1;
+  setLoadingItemId(item.id);
+
+  try {
+    const response = await toast.promise(
+      fetch(`http://localhost:5000/api/buy/${item.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ quantity }),
+      }),
+      {
+        pending: 'Preparing your checkout…',
+        success: 'Redirecting to Stripe!',
+        error: 'Failed to start checkout. Please try again.',
       },
-      body: JSON.stringify({ quantity }),
-    });
+      {
+        toastId: `stripe-${item.id}`, // ensures only one toast per item
+        position: 'top-right',
+      }
+    );
 
-    const data = await res.json();
+    const data = await response.json();
+
     if (data.url) {
       window.location.href = data.url;
+    } else {
+      setLoadingItemId(null);
     }
-  };
+  } catch (err) {
+    setLoadingItemId(null);
+    console.error('Stripe checkout failed:', err);
+  }
+};
+
+
 
   return (
     <>
-      <div className="tab-buttons">
-        <button
-          className={tab === 'purchased' ? 'active-tab' : ''}
-          onClick={() => setTab('purchased')}
-        >
-          Purchased
-        </button>
-        <button
-          className={tab === 'explore' ? 'active-tab' : ''}
-          onClick={() => setTab('explore')}
-        >
-          Explore More
-        </button>
-      </div>
+     <div className="tab-buttons">
+  <button
+    className={`tab-button ${tab === 'purchased' ? 'active-tab' : ''}`}
+    onClick={() => setTab('purchased')}
+  >
+    Purchased
+  </button>
+  <button
+    className={`tab-button ${tab === 'explore' ? 'active-tab' : ''}`}
+    onClick={() => setTab('explore')}
+  >
+    Explore More
+  </button>
+</div>
+
 
       {tab === 'purchased' ? (
         <div className="content-list">
@@ -76,7 +104,15 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
             </p>
           ) : (
             unpurchased.map((item) => (
-              <div key={item.id} className="content-box alt">
+              <div
+                key={item.id}
+                className="content-box alt"
+                id={
+                  item.title === 'Live Help Session'
+                    ? 'live-help-card'
+                    : undefined
+                }
+              >
                 <h4>{item.title}</h4>
                 <p>{item.description}</p>
 
@@ -104,20 +140,25 @@ export default function ContentTabs({ tab, setTab, purchased, unpurchased }) {
                         (quantities[item.id] || 1)
                       ).toFixed(2)}
                     </p>
-                    <button
-                      className="buy-button"
-                      onClick={() => handleBuy(item)}
-                    >
-                      Buy Live Help
-                    </button>
+<button
+  className="buy-button"
+  onClick={() => handleBuy(item)}
+  disabled={loadingItemId === item.id}
+>
+  {loadingItemId === item.id ? 'Loading...' : 'Buy Live Help'}
+</button>
+
                   </>
                 ) : (
-                  <button
-                    className="buy-button"
-                    onClick={() => handlePurchase(item.id, token)}
-                  >
-                    Buy for ${item.price / 100}
-                  </button>
+ <button
+  className="buy-button"
+  onClick={() => handleBuy(item)}
+  disabled={loadingItemId === item.id}
+>
+  {loadingItemId === item.id ? 'Loading...' : `Buy for $${item.price / 100}`}
+</button>
+
+
                 )}
               </div>
             ))

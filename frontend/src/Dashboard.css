@@ -28,9 +28,10 @@
   margin: 20px 0;
   display: flex;
   gap: 10px;
+  
 }
 
-.tab-buttons button {
+.tab-button {
   padding: 8px 16px;
   border: none;
   background: #ddd;
@@ -39,10 +40,15 @@
   transition: background 0.2s;
 }
 
-.tab-buttons .active-tab {
+.tab-button.active-tab {
   background: #4caf50;
   color: white;
 }
+.tab-button:not(.active-tab):hover {
+  background: #ccc;
+}
+
+
 
 .content-box {
   border: 1px solid #ccc;
@@ -322,4 +328,40 @@ input[type='tel'] {
 .content-card select {
   margin-top: 5px;
   padding: 5px;
+}
+
+.live-help-summary {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  background: #e8fff4;
+  padding: 10px;
+  border-radius: 8px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.live-help-action {
+  margin-top: 12px;
+}
+
+.buy-help-button,
+.book-session-button {
+  background-color: #0077cc;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.buy-help-button:hover,
+.book-session-button:hover {
+  background-color: #005fa3;
+}
+
+.buy-button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

@@ -35,7 +35,7 @@ router.get('/content', auth, async (req, res) => {
 
 router.post('/buy/:id', auth, async (req, res) => {
   const { quantity = 1 } = req.body || {}; // ✅ Step 1: get quantity from frontend
-
+  const safeQuantity = Math.max(1, Math.min(Number(quantity) || 1, 10)); // caps between 1–10
   try {
     const contentRes = await pool.query('SELECT * FROM content WHERE id = $1', [req.params.id]);
     const content = contentRes.rows[0];
@@ -49,11 +49,11 @@ router.post('/buy/:id', auth, async (req, res) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `${content.title} (${quantity} hr${quantity > 1 ? 's' : ''})`,
+              name: `${content.title} (${safeQuantity} hr${safeQuantity > 1 ? 's' : ''})`,
             },
             unit_amount: content.price, // this is price per hour (e.g. 9900)
           },
-          quantity, // 👈 dynamic
+          quantity: safeQuantity, // 👈 dynamic
         },
       ],
       mode: 'payment',
@@ -62,7 +62,7 @@ router.post('/buy/:id', auth, async (req, res) => {
       metadata: {
         userId: req.user.id,
         contentId: content.id,
-        quantity, // ✅ Step 3: track it if needed
+        safeQuantity, // ✅ Step 3: track it if needed
       },
     });
 
@@ -83,6 +83,26 @@ router.get('/confirm-payment', auth, async (req, res) => {
   } catch (err) {
     console.error('Error verifying session:', err);
     res.status(500).json({ error: 'Failed to verify payment session' });
+  }
+});
+
+router.get('/live-help-hours', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT SUM(quantity) as total_hours
+      FROM purchased_content pc
+      JOIN content c ON pc.content_id = c.id
+      WHERE pc.user_id = $1 AND c.title = 'Live Help Session'
+    `,
+      [req.user.id]
+    );
+
+    const total = result.rows[0].total_hours || 0;
+    res.json({ totalHours: total });
+  } catch (err) {
+    console.error('Error fetching live help hours:', err);
+    res.status(500).json({ error: 'Could not load live help data' });
   }
 });
 
