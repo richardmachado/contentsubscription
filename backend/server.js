@@ -21,6 +21,17 @@ app.use('/api', require('./routes/content'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/webhook', require('./routes/stripeWebhook'));
 
+const pool = require('./db'); // your db.js file
+require('dotenv').config(); // if not already required
+
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Database connection failed:', err.stack);
+  } else {
+    console.log('✅ Connected to Supabase DB! Server time is:', res.rows[0].now);
+  }
+});
+
 // Start server
 if (require.main === module) {
   app.listen(port, () => {

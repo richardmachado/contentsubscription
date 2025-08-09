@@ -4,6 +4,8 @@ const pool = require('../db');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const { auth } = require('../middleware/auth');
 
+const domain = process.env.DOMAIN || 'http://localhost:3000';
+
 router.get('/content', auth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -57,8 +59,8 @@ router.post('/buy/:id', auth, async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.DOMAIN}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.DOMAIN}/dashboard`,
+      success_url: `${domain}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${domain}/dashboard`,
       metadata: {
         userId: req.user.id,
         contentId: content.id,
@@ -103,6 +105,22 @@ router.get('/live-help-hours', auth, async (req, res) => {
   } catch (err) {
     console.error('Error fetching live help hours:', err);
     res.status(500).json({ error: 'Could not load live help data' });
+  }
+});
+
+// routes/content.js
+router.post('/mark-viewed/:contentId', auth, async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE purchased_content
+       SET viewed = TRUE
+       WHERE user_id = $1 AND content_id = $2`,
+      [req.user.id, req.params.contentId]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error marking content as viewed:', err);
+    res.status(500).json({ error: 'Could not mark as viewed' });
   }
 });
 

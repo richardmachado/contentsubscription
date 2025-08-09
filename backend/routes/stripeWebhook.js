@@ -20,6 +20,7 @@ router.post('/', async (req, res) => {
     const session = event.data.object;
     const userId = session.metadata.userId;
     const contentId = session.metadata.contentId;
+    const safeQuantity = parseInt(session.metadata.safeQuantity || '0', 10);
 
     try {
       await pool.query(
