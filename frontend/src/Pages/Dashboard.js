@@ -101,7 +101,7 @@ export default function Dashboard() {
           <button
             className="book-session-button"
             onClick={() => {
-              window.open('https://calendly.com/your-scheduler', '_blank');
+              window.open('https://calendly.com/rich92105/15min', '_blank');
             }}
           >
             📅 Book a Live Session 🧑‍💻

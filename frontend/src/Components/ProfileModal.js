@@ -55,47 +55,46 @@ export default function ProfileModal({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-const handleSave = async () => {
-  const emailValid = isValidEmail(form.email);
-  const phoneValid = isValidPhone(form.phone);
-  const nameValid =
-    (form.name || '').trim().length > 0 && /^[^\d]+$/.test((form.name || '').trim());
+  const handleSave = async () => {
+    const emailValid = isValidEmail(form.email);
+    const phoneValid = isValidPhone(form.phone);
+    const nameValid =
+      (form.name || '').trim().length > 0 && /^[^\d]+$/.test((form.name || '').trim());
 
-  if (!emailValid || !phoneValid || !nameValid) {
-    const fieldToShake = !emailValid ? 'email' : !phoneValid ? 'phone' : 'name';
-    setShakeField(fieldToShake);
-    setErrorMsg('Invalid info was not saved! Please fix errors and try again.');
-    setTimeout(() => setShakeField(null), 500);
-    return;
-  }
+    if (!emailValid || !phoneValid || !nameValid) {
+      const fieldToShake = !emailValid ? 'email' : !phoneValid ? 'phone' : 'name';
+      setShakeField(fieldToShake);
+      setErrorMsg('Invalid info was not saved! Please fix errors and try again.');
+      setTimeout(() => setShakeField(null), 500);
+      return;
+    }
 
-  setIsSaving(true);
-  try {
-    const emailVal = form.email.trim();
-    const phoneDigits = form.phone.replace(/\D/g, '');
-    const nameVal = form.name.trim();
+    setIsSaving(true);
+    try {
+      const emailVal = form.email.trim();
+      const phoneDigits = form.phone.replace(/\D/g, '');
+      const nameVal = form.name.trim();
 
-    await updateProfile({ email: emailVal, name: nameVal, phone: phoneDigits });
+      await updateProfile({ email: emailVal, name: nameVal, phone: phoneDigits });
 
-    setProfile({ email: emailVal, name: nameVal, phone: form.phone });
+      setProfile({ email: emailVal, name: nameVal, phone: form.phone });
 
-    // ✅ Show success inside modal
-    setErrorMsg('');
-    setSaveSuccess(true);
+      // ✅ Show success inside modal
+      setErrorMsg('');
+      setSaveSuccess(true);
 
-    // Keep "Saving..." a bit longer before closing
-    setTimeout(() => {
-      setSaveSuccess(false);
-      setIsSaving(false); // ✅ moved inside delay
-      if (onClose) onClose(true);
-    }, 1000); // 2 seconds visible
-  } catch (err) {
-    console.error('Save failed', err);
-    setErrorMsg('Failed to save profile. Please try again.');
-    setIsSaving(false);
-  }
-};
-
+      // Keep "Saving..." a bit longer before closing
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setIsSaving(false); // ✅ moved inside delay
+        if (onClose) onClose(true);
+      }, 1000); // 2 seconds visible
+    } catch (err) {
+      console.error('Save failed', err);
+      setErrorMsg('Failed to save profile. Please try again.');
+      setIsSaving(false);
+    }
+  };
 
   if (!profile) {
     return (

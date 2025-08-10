@@ -8,25 +8,33 @@ const domain = process.env.DOMAIN || 'http://localhost:3000';
 
 router.get('/content', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT c.*, 
-        EXISTS (
-          SELECT 1 FROM purchased_content pc 
-          WHERE pc.user_id = $1 AND pc.content_id = c.id
-        ) AS purchased
-      FROM content c`,
+    const { rows } = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.title,
+        c.description,
+        c.price,
+        -- purchased if any row exists for this user/content
+        (COUNT(pc.*) > 0) AS purchased,
+        -- viewed if any purchase for this user/content is marked viewed
+        COALESCE(BOOL_OR(pc.viewed), FALSE) AS viewed
+      FROM content c
+      LEFT JOIN purchased_content pc
+        ON pc.content_id = c.id
+       AND pc.user_id    = $1
+      GROUP BY c.id, c.title, c.description, c.price
+      ORDER BY c.title
+      `,
       [req.user.id]
     );
 
+    // If you have repeatable items (e.g., "Live Help Session"),
+    // force purchased=false and viewed=false so the UI stays actionable.
     const repeatableTitles = ['Live Help Session'];
-
-    // For repeatable content, force purchased = false
-    const modified = result.rows.map((item) => {
-      if (repeatableTitles.includes(item.title)) {
-        return { ...item, purchased: false };
-      }
-      return item;
-    });
+    const modified = rows.map((item) =>
+      repeatableTitles.includes(item.title) ? { ...item, purchased: false, viewed: false } : item
+    );
 
     res.json(modified);
   } catch (err) {
@@ -34,6 +42,7 @@ router.get('/content', auth, async (req, res) => {
     res.status(500).json({ error: 'Could not load content' });
   }
 });
+
 
 router.post('/buy/:id', auth, async (req, res) => {
   const { quantity = 1 } = req.body || {}; // ✅ Step 1: get quantity from frontend
@@ -111,17 +120,25 @@ router.get('/live-help-hours', auth, async (req, res) => {
 // routes/content.js
 router.post('/mark-viewed/:contentId', auth, async (req, res) => {
   try {
-    await pool.query(
-      `UPDATE purchased_content
-       SET viewed = TRUE
-       WHERE user_id = $1 AND content_id = $2`,
+    const result = await pool.query(
+      `
+      UPDATE purchased_content
+         SET viewed = TRUE
+       WHERE user_id   = $1
+         AND content_id = $2
+      `,
       [req.user.id, req.params.contentId]
     );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'No matching purchase found' });
+    }
     res.sendStatus(200);
   } catch (err) {
     console.error('Error marking content as viewed:', err);
     res.status(500).json({ error: 'Could not mark as viewed' });
   }
 });
+
 
 module.exports = router;

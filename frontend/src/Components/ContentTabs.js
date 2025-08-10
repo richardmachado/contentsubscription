@@ -6,6 +6,7 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
   const { token } = useAuth();
   const [quantities, setQuantities] = useState({});
   const [loadingItemId, setLoadingItemId] = useState(null);
+  const [viewingId, setViewingId] = useState(null); // ⬅️ new: lock the View button per item
 
   const handleQuantityChange = (id, qty) => {
     setQuantities((prev) => ({
@@ -33,14 +34,10 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
           success: 'Redirecting to Stripe!',
           error: 'Failed to start checkout. Please try again.',
         },
-        {
-          toastId: `stripe-${item.id}`,
-          position: 'top-right',
-        }
+        { toastId: `stripe-${item.id}`, position: 'top-right' }
       );
 
       const data = await response.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -53,6 +50,15 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
   };
 
   const handleView = async (contentId) => {
+    // Already viewed or already submitting → do nothing
+    const target = items.find((i) => i.id === contentId);
+    if (!target || target.viewed || viewingId === contentId) return;
+
+    setViewingId(contentId);
+
+    // ✅ Optimistic update
+    setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: true } : it)));
+
     try {
       const res = await fetch(`http://localhost:5000/api/mark-viewed/${contentId}`, {
         method: 'POST',
@@ -63,19 +69,23 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Unknown error');
       }
 
       toast.success('Marked as viewed');
+      // success: keep optimistic state
 
-      // Update item in state
-      setItems((prevItems) =>
-        prevItems.map((item) => (item.id === contentId ? { ...item, viewed: true } : item))
-      );
+      // If you also want to OPEN the content, do it here:
+      // window.open(`/content/${contentId}`, '_blank');
     } catch (err) {
       console.error('Error marking as viewed:', err);
       toast.error('Could not update viewed status');
+
+      // ⬅️ Rollback on error
+      setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: false } : it)));
+    } finally {
+      setViewingId(null);
     }
   };
 
@@ -139,8 +149,13 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
                   </span>
                 )}
 
-                <button className="view-button" onClick={() => handleView(item.id)}>
-                  View
+                <button
+                  className="view-button"
+                  onClick={() => handleView(item.id)}
+                  disabled={item.viewed || viewingId === item.id}
+                  title={item.viewed ? 'Already viewed' : 'Mark as viewed'}
+                >
+                  {viewingId === item.id ? 'Marking…' : item.viewed ? 'Viewed' : 'Mark as viewed'}
                 </button>
               </div>
             ))
