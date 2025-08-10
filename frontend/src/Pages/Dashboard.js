@@ -6,11 +6,7 @@ import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
 import { Link } from 'react-router-dom';
 
-import {
-  fetchContent,
-  fetchProfile,
-  updateProfile as saveProfile,
-} from '../utils/api';
+import { fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
 
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
@@ -27,7 +23,6 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // ✅ Stripe confirmation
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session_id');
 
@@ -50,33 +45,22 @@ export default function Dashboard() {
               origin: { y: 0.6 },
             });
 
-            toast.success(
-              '✅ Payment successful! You now have access to your content.'
-            );
+            toast.success('✅ Payment successful! You now have access to your content.');
             toastShownRef.current = true;
 
-            // Clean the URL
             window.history.replaceState({}, document.title, '/dashboard');
           }
         }
 
-        // ✅ Fetch content + profile
-        const [fetchedItems, fetchedProfile] = await Promise.all([
-          fetchContent(),
-          fetchProfile(),
-        ]);
+        const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
         setItems(fetchedItems);
         setProfile(fetchedProfile);
 
-        // ✅ Fetch total live help hours
-        const hoursRes = await fetch(
-          'http://localhost:5000/api/live-help-hours',
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-          }
-        );
+        const hoursRes = await fetch('http://localhost:5000/api/live-help-hours', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
         const hoursData = await hoursRes.json();
         setLiveHelpHours(hoursData.totalHours);
       } catch (error) {
@@ -86,9 +70,6 @@ export default function Dashboard() {
 
     loadData();
   }, []);
-
-  const purchased = items.filter((i) => i.purchased);
-  const unpurchased = items.filter((i) => !i.purchased);
 
   return (
     <div className="container">
@@ -103,15 +84,15 @@ export default function Dashboard() {
         🧑‍🏫 Total Live Help Purchased: <strong>{liveHelpHours}</strong> hour
         {liveHelpHours !== 1 ? 's' : ''}
       </div>
+
       <div className="live-help-action">
         {liveHelpHours === 0 ? (
           <button
             className="buy-help-button"
             onClick={() => {
               const el = document.getElementById('live-help-card');
-              if (el)
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTab('explore'); // switch to Explore tab if not already
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setTab('explore');
             }}
           >
             💳 Buy Live Help Hours 🧑‍💻
@@ -123,7 +104,7 @@ export default function Dashboard() {
               window.open('https://calendly.com/your-scheduler', '_blank');
             }}
           >
-            📅 Book a Live Session 🧑‍💻 
+            📅 Book a Live Session 🧑‍💻
           </button>
         )}
       </div>
@@ -133,31 +114,23 @@ export default function Dashboard() {
           <div className="guide-card">
             <p>Free content to get you started</p>
             <h3>🆓 Getting Started with Node.js</h3>
-            <p>
-              Beginner-friendly intro to building with JavaScript. No purchase
-              needed.
-            </p>
+            <p>Beginner-friendly intro to building with JavaScript. No purchase needed.</p>
           </div>
         </Link>
       </div>
 
-<div className="free-content-card">
+      <div className="free-content-card">
         <Link to="/data-types" className="free-guide-link">
           <div className="guide-card">
             <p>More free content</p>
             <h3>Javascript data types</h3>
-            <p>
-              Beginner-friendly intro to data types in javascript
-            </p>
+            <p>Beginner-friendly intro to data types in javascript</p>
           </div>
         </Link>
       </div>
-      <ContentTabs
-        tab={tab}
-        setTab={setTab}
-        purchased={purchased}
-        unpurchased={unpurchased}
-      />
+
+      {/* ✅ Pass full items + setItems */}
+      <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
 
       {showModal && (
         <ProfileModal
@@ -165,7 +138,12 @@ export default function Dashboard() {
           setProfile={setProfile}
           updateProfile={saveProfile}
           logout={logout}
-          onClose={() => setShowModal(false)}
+          onClose={(saved) => {
+            setShowModal(false);
+            if (saved) {
+              toast.success('✅ Profile updated successfully!');
+            }
+          }}
         />
       )}
     </div>

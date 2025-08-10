@@ -10,7 +10,6 @@
     "axios": "^1.10.0",
     "canvas-confetti": "^1.9.3",
     "jwt-decode": "^4.0.0",
-    "prettier": "^3.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.60.0",
@@ -25,14 +24,12 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "lint": "eslint backend/**/*.js",
+    "lint:client": "eslint frontend/src/**/*.{js,jsx}",
+    "lint:fix": "eslint backend/**/*.js --fix"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
+
   "browserslist": {
     "production": [
       ">0.2%",
@@ -48,7 +45,12 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
     "autoprefixer": "^10.4.21",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4.1.11"
   }
 }

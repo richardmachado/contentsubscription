@@ -24,20 +24,14 @@ function Login({ setToken }) {
         {mode === 'login' ? (
           <>
             <p className="auth-toggle-text">Don’t have an account?</p>
-            <button
-              onClick={() => setMode('signup')}
-              className="toggle-action-button"
-            >
+            <button onClick={() => setMode('signup')} className="toggle-action-button">
               Create Account
             </button>
           </>
         ) : (
           <>
             <p className="auth-toggle-text">Already registered?</p>
-            <button
-              onClick={() => setMode('login')}
-              className="toggle-action-button"
-            >
+            <button onClick={() => setMode('login')} className="toggle-action-button">
               Back to Login
             </button>
           </>

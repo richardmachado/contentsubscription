@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import './profileModal.css';
+
 function formatPhone(value) {
   const val = value || '';
   const digits = val.replace(/\D/g, '').slice(0, 10);
@@ -28,16 +29,15 @@ export default function ProfileModal({
   updateProfile,
   logout,
   onClose,
+  onSaved, // optional: parent can show a toast for a few seconds
 }) {
   const initial = useRef(profile || {});
-  const [form, setForm] = useState(
-    profile || { email: '', name: '', phone: '' }
-  );
+  const [form, setForm] = useState(profile || { email: '', name: '', phone: '' });
 
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [shakeField, setShakeField] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -52,45 +52,50 @@ export default function ProfileModal({
   }, [profile]);
 
   const handleChange = (field, value) => {
-    const next = { ...form, [field]: value };
-    setForm(next);
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async () => {
-    if (!isValidEmail(form.email) || !isValidPhone(form.phone) || !nameValid) {
-      const fieldToShake = !isValidEmail(form.email)
-        ? 'email'
-        : !isValidPhone(form.phone)
-          ? 'phone'
-          : 'name';
-      setShakeField(fieldToShake);
-      setErrorMsg(
-        'Invalid info was not saved! Please fix errors and try again.'
-      );
-      setTimeout(() => setShakeField(null), 500);
-      return;
-    }
+const handleSave = async () => {
+  const emailValid = isValidEmail(form.email);
+  const phoneValid = isValidPhone(form.phone);
+  const nameValid =
+    (form.name || '').trim().length > 0 && /^[^\d]+$/.test((form.name || '').trim());
 
-    setIsSaving(true); // 🚫 Disable button
-    try {
-      const emailVal = form.email.trim();
-      const phoneDigits = form.phone.replace(/\D/g, '');
-      await updateProfile({
-        email: emailVal,
-        name: form.name.trim(),
-        phone: phoneDigits,
-      });
-      setProfile({ email: emailVal, name: form.name, phone: form.phone });
-      setSaveSuccess(true);
-      setErrorMsg('');
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
-      console.error('Save failed', err);
-      setErrorMsg('Failed to save profile. Please try again.');
-    } finally {
-      setIsSaving(false); // ✅ Re-enable button
-    }
-  };
+  if (!emailValid || !phoneValid || !nameValid) {
+    const fieldToShake = !emailValid ? 'email' : !phoneValid ? 'phone' : 'name';
+    setShakeField(fieldToShake);
+    setErrorMsg('Invalid info was not saved! Please fix errors and try again.');
+    setTimeout(() => setShakeField(null), 500);
+    return;
+  }
+
+  setIsSaving(true);
+  try {
+    const emailVal = form.email.trim();
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    const nameVal = form.name.trim();
+
+    await updateProfile({ email: emailVal, name: nameVal, phone: phoneDigits });
+
+    setProfile({ email: emailVal, name: nameVal, phone: form.phone });
+
+    // ✅ Show success inside modal
+    setErrorMsg('');
+    setSaveSuccess(true);
+
+    // Keep "Saving..." a bit longer before closing
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setIsSaving(false); // ✅ moved inside delay
+      if (onClose) onClose(true);
+    }, 1000); // 2 seconds visible
+  } catch (err) {
+    console.error('Save failed', err);
+    setErrorMsg('Failed to save profile. Please try again.');
+    setIsSaving(false);
+  }
+};
+
 
   if (!profile) {
     return (
@@ -103,51 +108,46 @@ export default function ProfileModal({
     );
   }
 
-  const emailValid = isValidEmail(form.email);
-  const phoneValid = isValidPhone(form.phone);
-  const nameValid =
-    (form.name || '').trim().length > 0 && /^[^\d]+$/.test(form.name.trim());
+  // live validation for input styling/messages
+  const emailValidLive = isValidEmail(form.email);
+  const phoneValidLive = isValidPhone(form.phone);
+  const nameValidLive =
+    (form.name || '').trim().length > 0 && /^[^\d]+$/.test((form.name || '').trim());
 
   return (
     <div className="profile-modal-overlay">
       <div className="profile-modal">
         <h3>Edit Profile</h3>
+        {/* right under <h3>Edit Profile</h3> */}
+        {saveSuccess && <div className="confirmation-modal">✅ Profile updated successfully!</div>}
+        {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
-        {saveSuccess && (
-          <div className="confirmation-modal">
-            ✅ Profile updated successfully!
-          </div>
-        )}
         {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
         <input
-          className={`${!emailValid ? 'invalid' : ''} ${shakeField === 'email' ? 'shake' : ''}`}
+          className={`${!emailValidLive ? 'invalid' : ''} ${shakeField === 'email' ? 'shake' : ''}`}
           placeholder="Email"
           type="email"
           value={form.email}
           onChange={(e) => handleChange('email', e.target.value)}
         />
-        {!emailValid && <p className="error-text">Enter a valid email.</p>}
+        {!emailValidLive && <p className="error-text">Enter a valid email.</p>}
 
         <input
-          className={`${!nameValid ? 'invalid' : ''} ${shakeField === 'name' ? 'shake' : ''}`}
+          className={`${!nameValidLive ? 'invalid' : ''} ${shakeField === 'name' ? 'shake' : ''}`}
           placeholder="Full Name"
           value={form.name || ''}
           onChange={(e) => handleChange('name', e.target.value)}
         />
-        {!nameValid && (
-          <p className="error-text">Name cannot be empty or contain numbers.</p>
-        )}
+        {!nameValidLive && <p className="error-text">Name cannot be empty or contain numbers.</p>}
 
         <input
-          className={`${!phoneValid ? 'invalid' : ''} ${shakeField === 'phone' ? 'shake' : ''}`}
+          className={`${!phoneValidLive ? 'invalid' : ''} ${shakeField === 'phone' ? 'shake' : ''}`}
           placeholder="Phone Number"
           value={form.phone}
           onChange={(e) => handleChange('phone', formatPhone(e.target.value))}
         />
-        {!phoneValid && (
-          <p className="error-text">Enter a 10-digit phone number.</p>
-        )}
+        {!phoneValidLive && <p className="error-text">Enter a 10-digit phone number.</p>}
 
         <div className="button-row">
           <button type="button" onClick={handleSave} disabled={isSaving}>
@@ -157,8 +157,8 @@ export default function ProfileModal({
           <button type="button" onClick={logout}>
             Logout
           </button>
-          <button type="button" onClick={onClose}>
-            Close
+          <button type="button" onClick={() => onClose(false)}>
+            Close - Do not save
           </button>
         </div>
       </div>

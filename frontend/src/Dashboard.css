@@ -28,7 +28,6 @@
   margin: 20px 0;
   display: flex;
   gap: 10px;
-  
 }
 
 .tab-button {
@@ -47,8 +46,6 @@
 .tab-button:not(.active-tab):hover {
   background: #ccc;
 }
-
-
 
 .content-box {
   border: 1px solid #ccc;

@@ -96,7 +96,9 @@
   border-radius: 10px;
   margin: 1rem 0;
   text-decoration: none;
-  transition: transform 0.2s, background 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -149,7 +151,9 @@
   padding: 1rem;
   border-radius: 10px;
   text-decoration: none;
-  transition: background 0.3s, color 0.3s;
+  transition:
+    background 0.3s,
+    color 0.3s;
 }
 
 .node-guide-container.light .guide-card {

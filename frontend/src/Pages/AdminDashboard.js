@@ -96,10 +96,7 @@ export default function AdminDashboard() {
             const hasPurchases = user.purchased?.filter(Boolean).length > 0;
 
             return (
-              <div
-                key={user.id}
-                className={`user-card ${!hasPurchases ? 'no-purchases' : ''}`}
-              >
+              <div key={user.id} className={`user-card ${!hasPurchases ? 'no-purchases' : ''}`}>
                 <h3>{user.username}</h3>
                 <p>
                   <strong>Email:</strong> {user.email || 'Not set'}
@@ -118,9 +115,7 @@ export default function AdminDashboard() {
                     user.purchased.filter(Boolean).map((purchase, index) => (
                       <div key={index} className="purchase-detail">
                         <span className="status-chip">{purchase.item}</span>
-                        <div className="timestamp">
-                          🕒 {formatTimeAgo(purchase.timestamp)}
-                        </div>
+                        <div className="timestamp">🕒 {formatTimeAgo(purchase.timestamp)}</div>
                       </div>
                     ))
                   ) : (

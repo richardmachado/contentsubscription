@@ -12,15 +12,14 @@ function JSDataTypesGuide() {
   return (
     <div className={darkMode ? 'node-guide-container dark' : 'node-guide-container light'}>
       <div className="theme-toggle">
-        <button onClick={toggleTheme}>
-          {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
-        </button>
+        <button onClick={toggleTheme}>{darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}</button>
       </div>
 
       <div className="node-guide-content">
         <h1>📚 JavaScript Data Types</h1>
         <p>
-          JavaScript has two main types of data: <strong>primitive</strong> and <strong>non-primitive</strong>. Let’s break it down with examples!
+          JavaScript has two main types of data: <strong>primitive</strong> and{' '}
+          <strong>non-primitive</strong>. Let’s break it down with examples!
         </p>
 
         <h2>🔢 Primitive Types</h2>
@@ -44,7 +43,8 @@ function JSDataTypesGuide() {
             <strong>Symbol:</strong> <code>let id = Symbol("unique");</code>
           </li>
           <li>
-            <strong>BigInt:</strong> <code>let big = 1234567890123456789012345678901234567890n;</code>
+            <strong>BigInt:</strong>{' '}
+            <code>let big = 1234567890123456789012345678901234567890n;</code>
           </li>
         </ul>
 
@@ -75,7 +75,9 @@ console.log(typeof null); // object (weird JS quirk!)`}</code>
         <ul>
           <li>Primitive values are immutable.</li>
           <li>Objects and arrays are reference types.</li>
-          <li><code>null</code> is technically an object — it's a long-standing JS bug 🤷</li>
+          <li>
+            <code>null</code> is technically an object — it's a long-standing JS bug 🤷
+          </li>
         </ul>
 
         <h2>🚀 Next Steps</h2>

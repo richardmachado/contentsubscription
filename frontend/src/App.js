@@ -1,10 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  Link,
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import Dashboard from './Pages/Dashboard';
@@ -64,14 +58,11 @@ function AppRoutes() {
         />
         <Route
           path="/admin-dashboard"
-          element={
-            user?.is_admin ? <AdminDashboard /> : <Navigate to="/dashboard" />
-          }
+          element={user?.is_admin ? <AdminDashboard /> : <Navigate to="/dashboard" />}
         />
         <Route path="/learn-node" element={<NodeGuide />} />
         <Route path="/data-types" element={<JSDataTypesGuide />} />
         <Route path="/home" element={<LandingPage />} />
-
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </>

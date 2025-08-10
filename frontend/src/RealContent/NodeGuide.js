@@ -2,44 +2,32 @@ import React, { useState, useEffect } from 'react';
 import './NodeGuide.css';
 
 function NodeGuide() {
-
-
-useEffect(() => {
-  window.scrollTo(0, 0);
-}, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const [darkMode, setDarkMode] = useState(true);
 
   const toggleTheme = () => setDarkMode(!darkMode);
 
   return (
-    <div
-      className={
-        darkMode ? 'node-guide-container dark' : 'node-guide-container light'
-      }
-    >
+    <div className={darkMode ? 'node-guide-container dark' : 'node-guide-container light'}>
       <div className="theme-toggle">
-        <button onClick={toggleTheme}>
-          {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
-        </button>
+        <button onClick={toggleTheme}>{darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}</button>
       </div>
 
       <div className="node-guide-content">
         <h1>🚀 Node.js for Total Beginners</h1>
         <p>
-          Think of Node.js as a way to run JavaScript <em>outside</em> your
-          browser. This guide walks you through the basics, step by step.
+          Think of Node.js as a way to run JavaScript <em>outside</em> your browser. This guide
+          walks you through the basics, step by step.
         </p>
 
         <h2>🛠️ Step 1: Install Node.js</h2>
         <ul>
           <li>
             Go to{' '}
-            <a
-              href="https://nodejs.org"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer">
               nodejs.org
             </a>
           </li>
