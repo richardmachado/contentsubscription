@@ -11,7 +11,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
           json_agg(
             json_build_object(
               'item', c.title,
-              'timestamp', pc.created_at
+              'timestamp', pc.purchased_at
             )
           ) FILTER (WHERE c.title IS NOT NULL),
           '[]'

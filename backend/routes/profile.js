@@ -3,14 +3,14 @@ const router = express.Router();
 const pool = require('../db');
 const { auth } = require('../middleware/auth');
 
-router.get('/profile', auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const result = await pool.query('SELECT name, phone, email FROM users WHERE id = $1', [
     req.user.id,
   ]);
   res.json(result.rows[0] || {});
 });
 
-router.post('/profile', auth, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { name, phone, email } = req.body;
   const digitsOnly = phone.replace(/\D/g, '');
   if (!/^\d{10}$/.test(digitsOnly)) {
