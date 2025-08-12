@@ -2,7 +2,8 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+const bodyParser = require( 'body-parser' );
+// const { auth } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -58,6 +59,7 @@ app.use('/api/admin', auth, authenticateAdmin, require('./routes/admin'));
 
 // Stripe webhook (keep last so raw body isn’t eaten by express.json earlier)
 app.use('/webhook', require('./routes/stripeWebhook'));
+app.use('/api/buy', auth, require('./routes/buy'));  // <-- NEW
 
 // ---- DB sanity check (optional) ----
 const { pool } = require('./db'); // ensure db.js exports { pool, query }
