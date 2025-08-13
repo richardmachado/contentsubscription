@@ -7,6 +7,9 @@ function getBearer(req) {
 }
 
 const auth = (req, res, next) => {
+  // 🔑 Allow CORS preflight to pass
+  if (req.method === 'OPTIONS') return next();
+
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'Missing token' });
   try {
