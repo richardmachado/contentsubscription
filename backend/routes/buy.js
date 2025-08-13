@@ -4,6 +4,11 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { pool } = require('../db');
 
+
+const appUrl      = process.env.APP_URL || 'http://localhost:3000';
+const successPath = process.env.APP_SUCCESS_PATH || '/dashboard';
+const cancelPath = process.env.APP_CANCEL_PATH || '/dashboard';
+
 router.options('/:id', (_req, res) => res.sendStatus(204));
 
 const isPriceId = (v) => typeof v === 'string' && /^price_[A-Za-z0-9]+$/.test(v);
@@ -51,8 +56,8 @@ router.post('/:id', async (req, res, next) => {
 
     const appUrl = env('APP_URL', 'http://localhost:3000');
     const currency = env('CURRENCY', 'usd');
-    const successPath = env('APP_SUCCESS_PATH', '/checkout');
-    const cancelPath = env('APP_CANCEL_PATH', '/checkout');
+    const successPath = env('APP_SUCCESS_PATH', '/dashboard');
+    const cancelPath = env('APP_CANCEL_PATH', '/dashbaord');
 
     const row = await fetchContentRow(contentId);
 
@@ -89,20 +94,16 @@ router.post('/:id', async (req, res, next) => {
       };
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [lineItem],
-      allow_promotion_codes: true,
-      client_reference_id: `${contentId}:${user.id}`,
-      metadata: {
-        content_id: contentId,
-        user_id: String(user.id),
-        user_email: user.email || '',
-      },
-      customer_email: user.email,
-      success_url: `${appUrl}${successPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}${cancelPath}?status=cancelled`,
-    });
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  line_items: [lineItem],
+  allow_promotion_codes: true,
+  client_reference_id: `${contentId}:${user.id}`,
+  metadata: { content_id: contentId, user_id: String(user.id), user_email: user.email || '' },
+  customer_email: user.email,
+  success_url: `${appUrl}${successPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${appUrl}${cancelPath}?status=cancelled`,
+});
 
     return res.status(200).json({ url: session.url, sessionId: session.id });
   } catch (err) {
