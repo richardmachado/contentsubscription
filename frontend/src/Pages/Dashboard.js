@@ -1,151 +1,184 @@
-import { useEffect, useState, useRef } from 'react';
-import confetti from 'canvas-confetti';
+// src/Pages/Dashboard.js
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import ContentTabs from '../Components/ContentTabs';
-import ProfileModal from '../Components/ProfileModal';
-import { Link } from 'react-router-dom';
-
-import { fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
-
 import { useAuth } from '../context/AuthContext';
-import '../Dashboard.css';
+import { api } from '../utils/api'; // axios with baseURL=http://localhost:5000/api
+import ContentTabs from '../Components/ContentTabs';
+
+function useQuery() {
+  const { search } = useLocation();
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
 
 export default function Dashboard() {
-  const { logout } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
-  const [tab, setTab] = useState('purchased');
-  const [showModal, setShowModal] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [liveHelpHours, setLiveHelpHours] = useState(0);
-  const toastShownRef = useRef(false);
+  const [tab, setTab] = useState('purchased'); // 'purchased' | 'explore'
+  const [loading, setLoading] = useState(true);
+  const [loadingMsg, setLoadingMsg] = useState('Loading your content…');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const q = useQuery();
 
+  // ---- load content list
+  const load = async () => {
+    setLoading(true);
+    setLoadingMsg('Loading your content…');
+    setError('');
+    try {
+      const { data } = await api.get('/content'); // expects purchased/viewed flags
+      setItems(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('Error loading /api/content:', e);
+      setError('Could not load your content.');
+      toast.error('Failed to load content.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
-    const loadData = async () => {
+    load();
+  }, []); // ← no eslint-disable needed
+
+  // Confirm Stripe session if present in query (?session_id=...)
+  useEffect(() => {
+    const sessionId = q.get('session_id');
+    if (!sessionId) return;
+
+    let cancelled = false;
+
+    const confirm = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('session_id');
+        setLoading(true);
+        setLoadingMsg('Confirming your payment…');
 
-        if (sessionId && !toastShownRef.current) {
-          const res = await fetch(
-            `http://localhost:5000/api/confirm-payment?session_id=${sessionId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-              },
-            }
-          );
+        const { data } = await api.get(
+          `/confirm-payment?session_id=${encodeURIComponent(sessionId)}`
+        );
 
-          const data = await res.json();
+        if (cancelled) return;
 
-          if (data.success) {
-            confetti({
-              particleCount: 150,
-              spread: 90,
-              origin: { y: 0.6 },
-            });
-
-            toast.success('✅ Payment successful! You now have access to your content.');
-            toastShownRef.current = true;
-
-            window.history.replaceState({}, document.title, '/dashboard');
+        if (data?.ok) {
+          const kind = q.get('kind');
+          const hours = q.get('hours');
+          if (kind === 'live-help') {
+            toast.success(`✅ Live Help booked${hours ? `: ${hours} hour(s)` : ''}!`);
+          } else {
+            toast.success('✅ Purchase confirmed!');
           }
+        } else {
+          toast.info('Payment confirmed, but nothing to grant.');
         }
-
-        const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
-        setItems(fetchedItems);
-        setProfile(fetchedProfile);
-
-        const hoursRes = await fetch('http://localhost:5000/api/live-help-hours', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const hoursData = await hoursRes.json();
-        setLiveHelpHours(hoursData.totalHours);
-      } catch (error) {
-        console.error('Error loading data:', error);
+      } catch (e) {
+        console.error('Confirm payment failed:', e);
+        toast.error('Could not confirm payment. If you paid, it may take a moment.');
+      } finally {
+        await load(); // refresh list either way
+        if (!cancelled) navigate('/dashboard', { replace: true }); // strip query params
       }
     };
 
-    loadData();
-  }, []);
+    confirm();
+    return () => {
+      cancelled = true;
+    };
+  }, [q, navigate]); // ← deps are real objects; no disable needed
+
+  const purchasedCount = items.filter((i) => i.purchased).length;
 
   return (
-    <div className="container">
-      <div className="header">
-        <h2>Premium Content</h2>
-        <button className="profile-button" onClick={() => setShowModal(true)}>
-          ⚙️ Edit profile
-        </button>
-      </div>
-
-      <div className="live-help-summary">
-        🧑‍🏫 Total Live Help Purchased: <strong>{liveHelpHours}</strong> hour
-        {liveHelpHours !== 1 ? 's' : ''}
-      </div>
-
-      <div className="live-help-action">
-        {liveHelpHours === 0 ? (
-          <button
-            className="buy-help-button"
-            onClick={() => {
-              const el = document.getElementById('live-help-card');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTab('explore');
-            }}
-          >
-            💳 Buy Live Help Hours 🧑‍💻
+    <div style={styles.wrap}>
+      <header style={styles.header}>
+        <div>
+          <h2 style={{ margin: 0 }}>Dashboard</h2>
+          <p style={{ margin: '4px 0 0', color: '#666' }}>
+            {user?.email ? `Signed in as ${user.email}` : 'Signed in'}
+          </p>
+        </div>
+        <div style={styles.headerRight}>
+          <button onClick={load} style={styles.refreshBtn} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
           </button>
-        ) : (
-          <button
-            className="book-session-button"
-            onClick={() => {
-              window.open('https://calendly.com/rich92105/15min', '_blank');
-            }}
-          >
-            📅 Book a Live Session 🧑‍💻
+        </div>
+      </header>
+
+      {loading ? (
+        <div style={styles.loadingBox}>
+          <div className="spinner" />
+          <p>{loadingMsg}</p>
+        </div>
+      ) : error ? (
+        <div style={styles.errorBox}>
+          <p>{error}</p>
+          <button onClick={load} style={styles.retryBtn}>
+            Try again
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <>
+          <section style={styles.summary}>
+            <div style={styles.pill}>
+              <strong>{purchasedCount}</strong> purchased
+            </div>
+            <div style={styles.pill}>
+              <strong>{items.length - purchasedCount}</strong> available
+            </div>
+          </section>
 
-      <div className="free-content-card">
-        <Link to="/learn-node" className="free-guide-link">
-          <div className="guide-card">
-            <p>Free content to get you started</p>
-            <h3>🆓 Getting Started with Node.js</h3>
-            <p>Beginner-friendly intro to building with JavaScript. No purchase needed.</p>
-          </div>
-        </Link>
-      </div>
-
-      <div className="free-content-card">
-        <Link to="/data-types" className="free-guide-link">
-          <div className="guide-card">
-            <p>More free content</p>
-            <h3>Javascript data types</h3>
-            <p>Beginner-friendly intro to data types in javascript</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* ✅ Pass full items + setItems */}
-      <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
-
-      {showModal && (
-        <ProfileModal
-          profile={profile}
-          setProfile={setProfile}
-          updateProfile={saveProfile}
-          logout={logout}
-          onClose={(saved) => {
-            setShowModal(false);
-            if (saved) {
-              toast.success('✅ Profile updated successfully!');
-            }
-          }}
-        />
+          <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
+        </>
       )}
     </div>
   );
 }
+
+const styles = {
+  wrap: { maxWidth: 960, margin: '24px auto', padding: '0 16px' },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  headerRight: { display: 'flex', gap: 8, alignItems: 'center' },
+  refreshBtn: {
+    padding: '8px 12px',
+    borderRadius: 8,
+    border: '1px solid #ddd',
+    background: '#fff',
+    cursor: 'pointer',
+  },
+  loadingBox: {
+    padding: 24,
+    border: '1px solid #eee',
+    borderRadius: 12,
+    textAlign: 'center',
+    color: '#666',
+  },
+  errorBox: {
+    padding: 24,
+    border: '1px solid #f2dede',
+    borderRadius: 12,
+    color: '#a94442',
+    background: '#fdf7f7',
+  },
+  retryBtn: {
+    padding: '8px 12px',
+    borderRadius: 8,
+    border: '1px solid #ddd',
+    background: '#fff',
+    cursor: 'pointer',
+  },
+  summary: { display: 'flex', gap: 12, margin: '16px 0' },
+  pill: {
+    padding: '6px 10px',
+    background: '#f6f7f8',
+    borderRadius: 999,
+    fontSize: 13,
+    color: '#444',
+  },
+};

@@ -6,17 +6,27 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
   const { token } = useAuth();
   const [quantities, setQuantities] = useState({});
   const [loadingItemId, setLoadingItemId] = useState(null);
-  const [viewingId, setViewingId] = useState(null); // ⬅️ new: lock the View button per item
+  const [viewingId, setViewingId] = useState(null);
+
+  // 👇 Robust Live Help detector (by slug/title/kind/type)
+  const isLiveHelp = (it) => {
+    const slug = (it.slug || '').toLowerCase();
+    const title = (it.title || '').toLowerCase();
+    return (
+      slug === 'live-help-session' ||
+      title.includes('live help') ||
+      it.kind === 'service' ||
+      it.type === 'live_help'
+    );
+  };
 
   const handleQuantityChange = (id, qty) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Number(qty),
-    }));
+    const n = Math.max(1, Math.min(5, Number(qty) || 1)); // clamp 1–5
+    setQuantities((prev) => ({ ...prev, [id]: n }));
   };
 
   const handleBuy = async (item) => {
-    const quantity = quantities[item.id] || 1;
+    const quantity = isLiveHelp(item) ? quantities[item.id] || 1 : 1; // Live Help uses qty, others force 1
     setLoadingItemId(item.id);
 
     try {
@@ -37,11 +47,12 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
         { toastId: `stripe-${item.id}`, position: 'top-right' }
       );
 
-      const data = await response.json();
-      if (data.url) {
+      const data = await response.json().catch(() => ({}));
+      if (data?.url) {
         window.location.href = data.url;
       } else {
         setLoadingItemId(null);
+        toast.error(data?.error || 'Checkout failed');
       }
     } catch (err) {
       setLoadingItemId(null);
@@ -49,14 +60,12 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
     }
   };
 
+  // Leave this as-is for normal content; Live Help will never render it
   const handleView = async (contentId) => {
-    // Already viewed or already submitting → do nothing
     const target = items.find((i) => i.id === contentId);
-    if (!target || target.viewed || viewingId === contentId) return;
+    if (!target || target.viewed || viewingId === contentId || isLiveHelp(target)) return; // ⬅️ skip live help
 
     setViewingId(contentId);
-
-    // ✅ Optimistic update
     setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: true } : it)));
 
     try {
@@ -74,15 +83,9 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
       }
 
       toast.success('Marked as viewed');
-      // success: keep optimistic state
-
-      // If you also want to OPEN the content, do it here:
-      // window.open(`/content/${contentId}`, '_blank');
     } catch (err) {
       console.error('Error marking as viewed:', err);
       toast.error('Could not update viewed status');
-
-      // ⬅️ Rollback on error
       setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: false } : it)));
     } finally {
       setViewingId(null);
@@ -119,65 +122,8 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
                 <h4>{item.title}</h4>
                 <p>{item.description}</p>
 
-                {!item.viewed ? (
-                  <span
-                    className="badge badge-warning"
-                    style={{
-                      color: '#fff',
-                      background: '#f39c12',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '0.8em',
-                      marginRight: '8px',
-                    }}
-                  >
-                    NEW
-                  </span>
-                ) : (
-                  <span
-                    className="badge badge-success"
-                    style={{
-                      color: '#fff',
-                      background: '#27ae60',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '0.8em',
-                      marginRight: '8px',
-                    }}
-                  >
-                    VIEWED
-                  </span>
-                )}
-
-                <button
-                  className="view-button"
-                  onClick={() => handleView(item.id)}
-                  disabled={item.viewed || viewingId === item.id}
-                  title={item.viewed ? 'Already viewed' : 'Mark as viewed'}
-                >
-                  {viewingId === item.id ? 'Marking…' : item.viewed ? 'Viewed' : 'Mark as viewed'}
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      ) : (
-        <div className="tab-content">
-          {unpurchasedItems.length === 0 ? (
-            <p style={{ fontStyle: 'italic', color: '#888' }}>
-              🎉 You’ve purchased all current content. Stay tuned for new content coming soon!
-            </p>
-          ) : (
-            unpurchasedItems.map((item) => (
-              <div
-                key={item.id}
-                className="content-box alt"
-                id={item.title === 'Live Help Session' ? 'live-help-card' : undefined}
-              >
-                <h4>{item.title}</h4>
-                <p>{item.description}</p>
-
-                {item.title === 'Live Help Session' ? (
+                {isLiveHelp(item) ? (
+                  // ✅ Live Help: NO viewed badge, just booking controls
                   <>
                     <label>
                       Hours:&nbsp;
@@ -198,7 +144,78 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
                       onClick={() => handleBuy(item)}
                       disabled={loadingItemId === item.id}
                     >
-                      {loadingItemId === item.id ? 'Loading...' : 'Buy Live Help'}
+                      {loadingItemId === item.id ? 'Loading…' : 'Book Live Help'}
+                    </button>
+                  </>
+                ) : (
+                  // Normal content: viewed badge + mark-as-viewed button
+                  <>
+                    {!item.viewed ? (
+                      <span className="badge badge-warning" style={badgeWarnStyle}>
+                        NEW
+                      </span>
+                    ) : (
+                      <span className="badge badge-success" style={badgeOkStyle}>
+                        VIEWED
+                      </span>
+                    )}
+
+                    <button
+                      className="view-button"
+                      onClick={() => handleView(item.id)}
+                      disabled={item.viewed || viewingId === item.id}
+                      title={item.viewed ? 'Already viewed' : 'Mark as viewed'}
+                    >
+                      {viewingId === item.id
+                        ? 'Marking…'
+                        : item.viewed
+                          ? 'Viewed'
+                          : 'Mark as viewed'}
+                    </button>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="tab-content">
+          {unpurchasedItems.length === 0 ? (
+            <p style={{ fontStyle: 'italic', color: '#888' }}>
+              🎉 You’ve purchased all current content. Stay tuned for new content coming soon!
+            </p>
+          ) : (
+            unpurchasedItems.map((item) => (
+              <div
+                key={item.id}
+                className="content-box alt"
+                id={isLiveHelp(item) ? 'live-help-card' : undefined}
+              >
+                <h4>{item.title}</h4>
+                <p>{item.description}</p>
+
+                {isLiveHelp(item) ? (
+                  <>
+                    <label>
+                      Hours:&nbsp;
+                      <select
+                        value={quantities[item.id] || 1}
+                        onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                      >
+                        {[1, 2, 3, 4, 5].map((qty) => (
+                          <option key={qty} value={qty}>
+                            {qty}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <p>Total: ${((item.price / 100) * (quantities[item.id] || 1)).toFixed(2)}</p>
+                    <button
+                      className="buy-button"
+                      onClick={() => handleBuy(item)}
+                      disabled={loadingItemId === item.id}
+                    >
+                      {loadingItemId === item.id ? 'Loading…' : 'Buy Live Help'}
                     </button>
                   </>
                 ) : (
@@ -207,7 +224,9 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
                     onClick={() => handleBuy(item)}
                     disabled={loadingItemId === item.id}
                   >
-                    {loadingItemId === item.id ? 'Loading...' : `Buy for $${item.price / 100}`}
+                    {loadingItemId === item.id
+                      ? 'Loading…'
+                      : `Buy for $${(item.price / 100).toFixed(2)}`}
                   </button>
                 )}
               </div>
@@ -218,3 +237,21 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
     </>
   );
 }
+
+// tiny inline styles (same as your current)
+const badgeWarnStyle = {
+  color: '#fff',
+  background: '#f39c12',
+  padding: '2px 6px',
+  borderRadius: '4px',
+  fontSize: '0.8em',
+  marginRight: '8px',
+};
+const badgeOkStyle = {
+  color: '#fff',
+  background: '#27ae60',
+  padding: '2px 6px',
+  borderRadius: '4px',
+  fontSize: '0.8em',
+  marginRight: '8px',
+};

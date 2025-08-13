@@ -11,7 +11,9 @@ const port = process.env.PORT || 5000;
 
 
 // Stripe needs raw body on this path ONLY
-app.use('/webhook', express.raw({ type: 'application/json' }));
+app.use( '/webhook', express.raw( { type: 'application/json' } ) );
+const paymentsRouter = require('./routes/payments');
+app.use( '/api', paymentsRouter );
 
 // Normal middleware
 app.use(
@@ -52,7 +54,8 @@ app.use('/api', require('./routes/auth'));
 
 // Protected (needs user)
 app.use('/api/profile', auth, require('./routes/profile'));
-app.use('/api/content', auth, require('./routes/content'));
+app.use( '/api/content', auth, require( './routes/content' ) );
+app.use('/api', require('./routes/liveHelp'));
 
 // Admin (needs user + is_admin)
 app.use('/api/admin', auth, authenticateAdmin, require('./routes/admin'));
