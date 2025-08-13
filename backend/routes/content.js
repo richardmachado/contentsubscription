@@ -12,13 +12,18 @@ router.get('/', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { rows } = await query(
-      `SELECT c.id, c.slug, c.title, c.description, c.price,
-              c.is_premium, c.image_url, c.kind,
-              (pc.user_id IS NOT NULL) AS purchased
-       FROM content c
-       LEFT JOIN purchased_content pc
-         ON pc.content_id = c.id AND pc.user_id = $1
-       ORDER BY c.created_at DESC`,
+      `SELECT
+        c.id,
+        c.title,
+        c.description,
+        c.price,
+        (pc.user_id IS NOT NULL) AS purchased,
+        COALESCE(pc.viewed, false)        AS viewed
+      FROM content c
+      LEFT JOIN purchased_content pc
+        ON pc.content_id = c.id
+       AND pc.user_id    = $1
+      ORDER BY c.title`,
       [userId]
     );
     res.json(rows);
