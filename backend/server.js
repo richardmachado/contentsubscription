@@ -12,10 +12,9 @@ const profileRoutes = require('./routes/profile');
 const contentRoutes = require('./routes/content');
 const adminRoutes = require('./routes/admin');
 const buyRoutes = require('./routes/buy');
-const stripeWebhookRouter = require( './routes/stripeWebhook' );
+const stripeWebhookRouter = require('./routes/stripeWebhook');
 const liveHelpHourRoutes = require('./routes/liveHelpHour');
 const markViewedRoutes = require('./routes/markViewed');
-
 
 // DB (optional sanity check)
 const { pool } = require('./db');
@@ -56,11 +55,10 @@ app.use('/api/profile', auth, profileRoutes);
 app.use('/api/content', auth, contentRoutes);
 
 // Checkout / buy (protected)
-app.use( '/api/buy', auth, buyRoutes );
-app.use( '/api/live-help-hours', auth, liveHelpHourRoutes );
+app.use('/api/buy', auth, buyRoutes);
+app.use('/api/live-help-hours', auth, liveHelpHourRoutes);
 
 app.use('/api/mark-viewed', auth, markViewedRoutes);
-
 
 // Admin (needs user + is_admin)
 app.use('/api/admin', auth, authenticateAdmin, adminRoutes);

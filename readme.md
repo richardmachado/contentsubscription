@@ -1,0 +1,1 @@
+this project uses npm run dev to run frontend and backend concurrently

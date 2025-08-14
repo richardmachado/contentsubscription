@@ -6,6 +6,8 @@ import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
 import { Link } from 'react-router-dom';
 
+const API_BASE = process.env.REACT_APP_API_BASE || '';
+
 import { fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
 
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +30,7 @@ export default function Dashboard() {
 
         if (sessionId && !toastShownRef.current) {
           const res = await fetch(
-            `http://localhost:5000/api/confirm-payment?session_id=${sessionId}`,
+            `${API_BASE}/api/confirm-payment?session_id=${sessionId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,

@@ -4,8 +4,7 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { pool } = require('../db');
 
-
-const appUrl      = process.env.APP_URL || 'http://localhost:3000';
+const appUrl = process.env.APP_URL || 'http://localhost:3000';
 const successPath = process.env.APP_SUCCESS_PATH || '/dashboard';
 const cancelPath = process.env.APP_CANCEL_PATH || '/dashboard';
 
@@ -94,16 +93,16 @@ router.post('/:id', async (req, res, next) => {
       };
     }
 
-const session = await stripe.checkout.sessions.create({
-  mode: 'payment',
-  line_items: [lineItem],
-  allow_promotion_codes: true,
-  client_reference_id: `${contentId}:${user.id}`,
-  metadata: { content_id: contentId, user_id: String(user.id), user_email: user.email || '' },
-  customer_email: user.email,
-  success_url: `${appUrl}${successPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${appUrl}${cancelPath}?status=cancelled`,
-});
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [lineItem],
+      allow_promotion_codes: true,
+      client_reference_id: `${contentId}:${user.id}`,
+      metadata: { content_id: contentId, user_id: String(user.id), user_email: user.email || '' },
+      customer_email: user.email,
+      success_url: `${appUrl}${successPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}${cancelPath}?status=cancelled`,
+    });
 
     return res.status(200).json({ url: session.url, sessionId: session.id });
   } catch (err) {
@@ -116,4 +115,3 @@ const session = await stripe.checkout.sessions.create({
 });
 
 module.exports = router;
-  

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './Login.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE || '';
+
 function Login({ setToken }) {
   const [mode, setMode] = useState('login'); // 'login' or 'signup'
 
@@ -51,7 +53,7 @@ function FormContent({ mode, setToken }) {
     const endpoint = mode === 'login' ? '/api/login' : '/api/register';
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -63,7 +65,7 @@ function FormContent({ mode, setToken }) {
         handleLoginResponse(data);
       } else {
         if (data.success) {
-          const loginRes = await fetch(`http://localhost:5000/api/login`, {
+          const loginRes = await fetch(`${API_BASE}/api/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
