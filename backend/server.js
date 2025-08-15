@@ -1,101 +1,71 @@
-// server.js
-require('dotenv').config();
+// backend/db.js
+const { Pool } = require('pg');
+const dns = require('dns');
 
-const express = require('express');
-const cors = require('cors');
+// Prefer IPv4 for any lookups that still happen
+dns.setDefaultResultOrder?.('ipv4first');
 
-const { auth, authenticateAdmin } = require('./middleware/auth');
-
-// Routes
-const authRoutes = require('./routes/auth');
-const profileRoutes = require('./routes/profile');
-const contentRoutes = require('./routes/content');
-const adminRoutes = require('./routes/admin');
-const buyRoutes = require('./routes/buy');
-const stripeWebhookRouter = require('./routes/stripeWebhook');
-const liveHelpHourRoutes = require('./routes/liveHelpHour');
-const markViewedRoutes = require('./routes/markViewed');
-
-// DB (optional sanity check)
-const { pool } = require('./db');
-
-const app = express();
-const port = process.env.PORT || 5000;
-
-/* ------------------------- CORS (put first) ------------------------- */
-const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-// Apply CORS for all requests
-app.use(cors(corsOptions));
-
-// Handle all preflights — **use RegExp**, not a string, on Express 5
-app.options(/.*/, cors(corsOptions));
-
-/* ---------------- Stripe webhook raw body FIRST --------------------- */
-// Must be before express.json()
-app.use('/webhook', express.raw({ type: 'application/json' }));
-
-/* ---------------------- Parsers (normal JSON) ----------------------- */
-app.use(express.json());
-
-/* ---------------------------- Routes -------------------------------- */
-// Public (e.g., /api/register, /api/login)
-app.use('/api', authRoutes);
-
-// (Optional) ensure API preflights never hit auth
-app.options(/^\/api\/.*/, cors(corsOptions));
-
-// Protected (needs user)
-app.use('/api/profile', auth, profileRoutes);
-app.use('/api/content', auth, contentRoutes);
-
-// Checkout / buy (protected)
-app.use('/api/buy', auth, buyRoutes);
-app.use('/api/live-help-hours', auth, liveHelpHourRoutes);
-
-app.use('/api/mark-viewed', auth, markViewedRoutes);
-
-// Admin (needs user + is_admin)
-app.use('/api/admin', auth, authenticateAdmin, adminRoutes);
-
-// Stripe webhook (the raw body mount is above)
-app.use('/webhook', stripeWebhookRouter);
-
-/* ------------------------- Health / Debug --------------------------- */
-app.get('/healthz', (req, res) => res.status(200).json({ ok: true }));
-
-// Optional DB ping
-pool.query('SELECT NOW()', (err, r) => {
-  if (err) console.error('❌ DB connection failed:', err.stack);
-  else console.log('✅ DB connected. Server time:', r.rows[0].now);
-});
-
-/* -------------------------- Error handlers -------------------------- */
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Central error handler
-app.use((err, req, res, next) => {
-  console.error('💥 Error:', err);
-  if (!res.headersSent) {
-    res.status(err.status || 500).json({
-      error: err.message || 'Internal Server Error',
-    });
-  }
-});
-
-/* ----------------------------- Start -------------------------------- */
-if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`🚀 Server on http://localhost:${port}`);
-  });
+const raw = (process.env.DATABASE_URL || '').replace(/[\r\n]+/g, '').trim();
+if (!raw) {
+  console.error('DATABASE_URL is empty');
 }
 
-module.exports = app;
+const u = new URL(raw);
+
+// Allow an explicit IPv4 override via env (DATABASE_HOST_IPV4)
+// This completely bypasses AAAA records inside the container.
+const originalHost = u.hostname;
+const ipv4Override = process.env.DATABASE_HOST_IPV4; // e.g. "52.12.34.56"
+const hostToUse = ipv4Override || originalHost;
+
+const cfg = {
+  host: hostToUse,
+  port: Number(u.port || 5432),
+  user: decodeURIComponent(u.username || 'postgres'),
+  password: decodeURIComponent(u.password || ''),
+  database: (u.pathname || '/postgres').slice(1),
+
+  // Keep TLS strict in prod. When using an IP, set SNI to the original hostname
+  // so the certificate matches and verification passes.
+  ssl: {
+    rejectUnauthorized: true,
+    servername: originalHost,
+  },
+
+  keepAlive: true,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+};
+
+const pool = new Pool(cfg);
+
+pool.on('error', (e) => console.error('PG pool error (idle client):', e.message));
+
+// small startup sanity (won't crash the app)
+(async () => {
+  try {
+    const r = await pool.query('select now()');
+    console.log(
+      '✅ DB connected. Host used:',
+      hostToUse,
+      'SNI:',
+      originalHost,
+      'Time:',
+      r.rows[0].now
+    );
+  } catch (e) {
+    console.error(
+      '⚠️ DB check failed (continuing):',
+      e.message,
+      'Host used:',
+      hostToUse,
+      'SNI:',
+      originalHost
+    );
+  }
+})();
+
+module.exports = {
+  pool,
+  query: (text, params) => pool.query(text, params),
+};
