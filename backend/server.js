@@ -27,7 +27,8 @@ const adminRoutes = require('./routes/admin');
 const buyRoutes = require('./routes/buy');
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 const liveHelpHourRoutes = require('./routes/liveHelpHour');
-const markViewedRoutes = require('./routes/markViewed');
+const markViewedRoutes = require( './routes/markViewed' );
+const confirmPaymentRoutes = require('./routes/confirmPayment');
 
 const { pool } = require('./db');
 
@@ -87,7 +88,9 @@ app.options(/^\/api\/.*/, cors(corsOptionsDelegate)); // <-- use the delegate
 
 // Protected user routes
 app.use('/api/profile', auth, profileRoutes);
-app.use('/api/content', auth, contentRoutes);
+app.use( '/api/content', auth, contentRoutes );
+app.use('/api/confirm-payment', auth, confirmPaymentRoutes);
+
 
 // Checkout / Buy (protected)
 app.use('/api/buy', auth, buyRoutes);

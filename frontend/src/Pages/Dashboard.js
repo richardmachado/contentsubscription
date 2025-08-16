@@ -1,15 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
-import { Link } from 'react-router-dom';
 
-const API_BASE = process.env.REACT_APP_API_BASE || '';
-
-import { fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
-
+// ✅ Use our centralized API client + helpers
+import { api, fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
 
@@ -25,46 +23,42 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('session_id');
+        // --- Handle Stripe redirect ---
+        const url = new URL(window.location.href);
+        const sessionId = url.searchParams.get('session_id');
 
         if (sessionId && !toastShownRef.current) {
-          const res = await fetch(
-            `${API_BASE}/api/confirm-payment?session_id=${sessionId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-              },
-            }
-          );
-
-          const data = await res.json();
-
-          if (data.success) {
-            confetti({
-              particleCount: 150,
-              spread: 90,
-              origin: { y: 0.6 },
+          try {
+            const { data } = await api.get('/api/confirm-payment', {
+              params: { session_id: sessionId },
             });
 
-            toast.success('✅ Payment successful! You now have access to your content.');
-            toastShownRef.current = true;
+            if (data?.ok || data?.success) {
+              confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+              toast.success('✅ Payment successful! You now have access to your content.');
+              toastShownRef.current = true;
 
-            window.history.replaceState({}, document.title, '/dashboard');
+              // Clean the URL so refresh doesn't reconfirm
+              url.searchParams.delete('session_id');
+              window.history.replaceState({}, document.title, url.pathname + url.search);
+            } else {
+              // Not fatal—just log
+              console.warn('Confirm payment response:', data);
+            }
+          } catch (e) {
+            console.error('Confirm payment failed:', e);
+            // still proceed to load dashboard data
           }
         }
 
+        // --- Load content + profile ---
         const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
         setItems(fetchedItems);
         setProfile(fetchedProfile);
 
-        const hoursRes = await fetch('${API_BASE}/api/live-help-hours', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const hoursData = await hoursRes.json();
-        setLiveHelpHours(hoursData.totalHours);
+        // --- Live help hours ---
+        const { data: hoursData } = await api.get('/api/live-help-hours');
+        setLiveHelpHours(hoursData?.totalHours ?? 0);
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -131,7 +125,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* ✅ Pass full items + setItems */}
       <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
 
       {showModal && (
@@ -142,9 +135,7 @@ export default function Dashboard() {
           logout={logout}
           onClose={(saved) => {
             setShowModal(false);
-            if (saved) {
-              toast.success('✅ Profile updated successfully!');
-            }
+            if (saved) toast.success('✅ Profile updated successfully!');
           }}
         />
       )}

@@ -1,15 +1,24 @@
 // routes/buy.js
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe');
 const { pool } = require('../db');
 
-const appUrl = process.env.APP_URL || 'http://localhost:3000';
-const successPath = process.env.APP_SUCCESS_PATH || '/dashboard';
-const cancelPath = process.env.APP_CANCEL_PATH || '/dashboard';
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-router.options('/:id', (_req, res) => res.sendStatus(204));
+// ---------- Env helpers ----------
+const env = (name, fallback) => {
+  const v = process.env[name];
+  return v == null || v === '' ? fallback : v;
+};
 
+// Where to send the user after checkout
+const FRONTEND_ORIGIN = env('APP_URL', 'http://localhost:3000'); // or FRONTEND_ORIGIN if you prefer
+const SUCCESS_PATH = env('APP_SUCCESS_PATH', '/dashboard'); // e.g. /dashboard
+const CANCEL_PATH = env('APP_CANCEL_PATH', '/dashboard'); // fixed typo
+const CURRENCY = env('CURRENCY', 'usd');
+
+// ---------- Utilities ----------
 const isPriceId = (v) => typeof v === 'string' && /^price_[A-Za-z0-9]+$/.test(v);
 const toEnvKey = (slug) =>
   `STRIPE_PRICE_${String(slug || '')
@@ -17,25 +26,21 @@ const toEnvKey = (slug) =>
     .replace(/[^A-Z0-9]+/g, '_')}`;
 
 async function fetchContentRow(contentId) {
-  // Only select columns that actually exist in your schema
+  // match your actual schema (id, slug, title, stripe_price_id, price)
   const { rows } = await pool.query(
     `SELECT id, slug, title, stripe_price_id, price
-     FROM content
-     WHERE id = $1
-     LIMIT 1`,
+       FROM content
+      WHERE id = $1
+      LIMIT 1`,
     [contentId]
   );
   return rows[0] || null;
 }
 
-function env(name, fallback) {
-  const v = process.env[name];
-  return v == null || v === '' ? fallback : v;
-}
-
+// Convert your DB "price" to cents.
+// If PRICE_IS_CENTS=true, treat DB value as cents already.
+// Else treat as dollars and multiply by 100.
 function computeAmountCents(row) {
-  // If you later add price_cents, you can handle it here too.
-  // Currently you only have "price". We’ll assume dollars by default.
   if (row && row.price != null) {
     const raw = Number(row.price);
     if (Number.isFinite(raw)) {
@@ -47,23 +52,27 @@ function computeAmountCents(row) {
   return Number.isFinite(fallback) && fallback > 0 ? fallback : 100;
 }
 
+// Allow CORS preflight on this route
+router.options('/:id', (_req, res) => res.sendStatus(204));
+
+// ---------- Create Checkout Session ----------
 router.post('/:id', async (req, res, next) => {
   try {
     const { id: contentId } = req.params;
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-    const appUrl = env('APP_URL', 'http://localhost:3000');
-    const currency = env('CURRENCY', 'usd');
-    const successPath = env('APP_SUCCESS_PATH', '/dashboard');
-    const cancelPath = env('APP_CANCEL_PATH', '/dashbaord');
+    // quantity from client (default 1, clamp 1..10)
+    const quantity = Math.max(1, Math.min(10, Number(req.body?.quantity || 1)));
 
+    // Fetch content row
     const row = await fetchContentRow(contentId);
+    if (!row) return res.status(404).json({ error: 'Content not found' });
 
-    // 1) Try a real saved Stripe price_id
+    // Try explicit Stripe Price from DB or env, else use price_data fallback
     let candidatePrice =
-      (row?.stripe_price_id && isPriceId(row.stripe_price_id) && row.stripe_price_id) ||
-      (row?.slug && process.env[toEnvKey(row.slug)] && isPriceId(process.env[toEnvKey(row.slug)])
+      (row.stripe_price_id && isPriceId(row.stripe_price_id) && row.stripe_price_id) ||
+      (row.slug && process.env[toEnvKey(row.slug)] && isPriceId(process.env[toEnvKey(row.slug)])
         ? process.env[toEnvKey(row.slug)]
         : null) ||
       (process.env.STRIPE_PRICE_DEFAULT && isPriceId(process.env.STRIPE_PRICE_DEFAULT)
@@ -72,36 +81,46 @@ router.post('/:id', async (req, res, next) => {
 
     let lineItem;
     if (candidatePrice) {
-      lineItem = { price: candidatePrice, quantity: 1 };
+      lineItem = { price: candidatePrice, quantity };
     } else {
-      // 2) Inline price via price_data using your "price" column
-      const amount = computeAmountCents(row); // in cents
-      const productName = row?.title || row?.slug || `Item ${contentId}`;
+      const amount = computeAmountCents(row); // cents per unit
+      const productName = row.title || row.slug || `Item ${contentId}`;
       console.warn(
         'Using price_data fallback. amount=%s, currency=%s, name=%s',
         amount,
-        currency,
+        CURRENCY,
         productName
       );
       lineItem = {
         price_data: {
-          currency,
-          unit_amount: amount,
+          currency: CURRENCY,
+          unit_amount: amount, // cents per unit
           product_data: { name: productName },
         },
-        quantity: 1,
+        quantity,
       };
     }
 
+    // Success/cancel URLs
+    const success_url = `${FRONTEND_ORIGIN}${SUCCESS_PATH}?status=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url = `${FRONTEND_ORIGIN}${CANCEL_PATH}?status=cancelled`;
+
+    // Create session
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [lineItem],
       allow_promotion_codes: true,
+      customer_email: user.email, // or use a saved customer id
       client_reference_id: `${contentId}:${user.id}`,
-      metadata: { content_id: contentId, user_id: String(user.id), user_email: user.email || '' },
-      customer_email: user.email,
-      success_url: `${appUrl}${successPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}${cancelPath}?status=cancelled`,
+      // IMPORTANT: metadata used by /api/confirm-payment and/or webhook
+      metadata: {
+        content_id: contentId,
+        user_id: String(user.id),
+        user_email: user.email || '',
+        quantity: String(quantity),
+      },
+      success_url,
+      cancel_url,
     });
 
     return res.status(200).json({ url: session.url, sessionId: session.id });
