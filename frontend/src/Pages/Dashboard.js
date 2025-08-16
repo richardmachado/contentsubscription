@@ -58,7 +58,7 @@ export default function Dashboard() {
         setItems(fetchedItems);
         setProfile(fetchedProfile);
 
-        const hoursRes = await fetch('http://localhost:5000/api/live-help-hours', {
+        const hoursRes = await fetch('${API_BASE}/api/live-help-hours', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },

@@ -47,18 +47,52 @@ const allowList = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://
   .map((s) => s.trim())
   .filter(Boolean);
 
-const corsOptions = {
-  origin(origin, cb) {
-    if (!origin) return cb(null, true);
-    return cb(null, allowList.includes(origin));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+// --- CORS (FIRST) ---
+const cors = require('cors');
+
+const exactList = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+// e.g. ALLOWED_ORIGIN_PATTERNS="https://*.vercel.app,https://*.netlify.app"
+const patternList = (process.env.ALLOWED_ORIGIN_PATTERNS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+// turn "*.vercel.app" into a regex
+const toRegex = (pat) =>
+  new RegExp('^' + pat
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*') + '$');
+
+const patternRegexes = patternList.map(toRegex);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;           // curl, Postman, same-origin
+  if (exactList.includes(origin)) return true;
+  return patternRegexes.some(rx => rx.test(origin));
+}
+
+const corsOptionsDelegate = (req, cb) => {
+  const origin = req.headers.origin;
+  const allowed = isAllowedOrigin(origin);
+  if (!allowed) {
+    console.warn('[CORS] Blocked origin:', origin);
+  }
+  cb(null, {
+    origin: allowed,                           // true/false
+    credentials: true,
+    methods: ['GET','POST','PUT','DELETE','OPTIONS','PATCH'],
+    allowedHeaders: ['Content-Type','Authorization'],
+    optionsSuccessStatus: 200,                 // for old browsers
+  });
 };
 
-app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
+app.use(cors(corsOptionsDelegate));
+// preflight
+app.options(/.*/, cors(corsOptionsDelegate));
 
 /* ================= Stripe webhook raw body (BEFORE json) ============= */
 app.use('/webhook', express.raw({ type: 'application/json' }));

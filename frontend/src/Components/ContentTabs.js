@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 import { api } from '../lib/api';
 const API_BASE = process.env.REACT_APP_API_BASE || '';
+console.log("Contenttabs", API_BASE );
 
 export default function ContentTabs({ tab, setTab, items, setItems }) {
   const { token } = useAuth();
