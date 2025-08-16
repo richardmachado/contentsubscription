@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
-import { api } from '../lib/api';
+import { api } from '../utils/api';
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 console.log("Contenttabs", API_BASE );
 
