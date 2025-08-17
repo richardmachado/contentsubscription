@@ -6,13 +6,18 @@ import { Link } from 'react-router-dom';
 import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
 
-// ✅ Use our centralized API client + helpers
-import { api, fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
+import {
+  api,
+  setAuthToken,
+  fetchContent,
+  fetchProfile,
+  updateProfile as saveProfile,
+} from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
 
 export default function Dashboard() {
-  const { logout } = useAuth();
+  const { token, logout } = useAuth(); // ⬅️ pull token if your context provides it
   const [items, setItems] = useState([]);
   const [tab, setTab] = useState('purchased');
   const [showModal, setShowModal] = useState(false);
@@ -21,6 +26,9 @@ export default function Dashboard() {
   const toastShownRef = useRef(false);
 
   useEffect(() => {
+    // Ensure axios has Authorization for all calls
+    setAuthToken(token || localStorage.getItem('token') || undefined);
+
     const loadData = async () => {
       try {
         // --- Handle Stripe redirect ---
@@ -34,38 +42,55 @@ export default function Dashboard() {
             });
 
             if (data?.ok || data?.success) {
+              // After confirm, immediately reload content so Purchased reflects the new item
+              const [freshItems, freshProfile] = await Promise.all([
+                fetchContent(),
+                fetchProfile(),
+              ]);
+              setItems(freshItems);
+              setProfile(freshProfile);
+
               confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
               toast.success('✅ Payment successful! You now have access to your content.');
               toastShownRef.current = true;
 
-              // Clean the URL so refresh doesn't reconfirm
+              // Clean the URL so reloads don’t re-confirm
               url.searchParams.delete('session_id');
               window.history.replaceState({}, document.title, url.pathname + url.search);
+
+              // Make sure the Purchased tab is visible
+              setTab('purchased');
             } else {
-              // Not fatal—just log
-              console.warn('Confirm payment response:', data);
+              console.warn('Confirm payment response (not ok):', data);
             }
           } catch (e) {
-            console.error('Confirm payment failed:', e);
-            // still proceed to load dashboard data
+            // If confirm fails (e.g., not mounted), we still proceed—webhook may update later
+            console.warn(
+              'Confirm payment failed; proceeding with normal load:',
+              e?.response?.data || e.message
+            );
           }
         }
 
-        // --- Load content + profile ---
+        // --- Load content + profile (first paint / normal path) ---
         const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
         setItems(fetchedItems);
         setProfile(fetchedProfile);
 
-        // --- Live help hours ---
-        const { data: hoursData } = await api.get('/api/live-help-hours');
-        setLiveHelpHours(hoursData?.totalHours ?? 0);
+        // --- Live help hours (non-blocking) ---
+        try {
+          const { data: hoursData } = await api.get('/api/live-help-hours');
+          setLiveHelpHours(hoursData?.totalHours ?? 0);
+        } catch {
+          /* ignore */
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       }
     };
 
     loadData();
-  }, []);
+  }, [token]); // re-run if token changes
 
   return (
     <div className="container">
