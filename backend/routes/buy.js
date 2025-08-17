@@ -114,10 +114,9 @@ router.post('/:id', async (req, res, next) => {
       client_reference_id: `${contentId}:${user.id}`,
       // IMPORTANT: metadata used by /api/confirm-payment and/or webhook
       metadata: {
-        content_id: contentId,
-        user_id: String(user.id),
-        user_email: user.email || '',
-        quantity: String(quantity),
+        user_id: String(req.user.id),
+        content_id: String(req.params.id),  // <— THIS is the content.id
+        quantity: String(Math.max(1, Math.min(10, Number(req.body?.quantity || 1)))),
       },
       success_url,
       cancel_url,
