@@ -44,8 +44,8 @@ function AppRoutes() {
       <Routes>
         {/* Public login page */}
         <Route path="/login" element={<Login setToken={login} />} />
-
-        {/* Option A: Dashboard is the home page so Stripe can return to "/" */}
+        {/* Option A: Dashboard is the home page so Stripe can return to "/" */}+
+        <Route path="*" element={<Navigate to="/" replace />} />
         <Route
           path="/"
           element={
@@ -54,10 +54,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         {/* Back-compat: if anything points to /dashboard, send to / */}
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
-
         {/* Protected pages */}
         <Route
           path="/subscribe"
@@ -75,7 +73,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         {/* Public/free pages */}
         <Route path="/learn-node" element={<NodeGuide />} />
         <Route path="/data-types" element={<JSDataTypesGuide />} />
