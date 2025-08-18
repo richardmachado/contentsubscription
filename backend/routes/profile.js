@@ -12,9 +12,9 @@ router.get('/', async (req, res, next) => {
     // Example: return the current user's profile. Adjust query to your schema.
     // If your profile lives on "users", change the SQL accordingly.
     const { rows } = await pool.query(
-      `SELECT id, username, full_name, phone
-         FROM profiles
-        WHERE user_id = $1
+      `SELECT id, username, name, phone
+         FROM users
+        WHERE id = $1
         LIMIT 1`,
       [req.user.id]
     );
