@@ -13,7 +13,7 @@ import {
   fetchContent,
   fetchProfile,
   updateProfile as saveProfile,
-  confirmPayment, // <-- new helper from api.js
+  confirmPayment,
 } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
@@ -35,8 +35,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const status = params.get('status'); // "success" | "cancelled" | null
-    const sessionId = params.get('session_id'); // Stripe Checkout session ID (if success)
+    let status = params.get('status'); // "success" | "cancel" | null
+    let sessionId = params.get('session_id'); // Stripe Checkout session ID (if success)
+
+    // If we got bounced to /login first, ProtectedRoute may have stashed these:
+    if (!status && !sessionId) {
+      const pStatus = sessionStorage.getItem('pendingStatus');
+      const pSid = sessionStorage.getItem('pendingSessionId');
+      if (pStatus && pSid) {
+        status = pStatus;
+        sessionId = pSid;
+      }
+    }
 
     const cleanUrl = () => {
       const url = new URL(window.location.href);
@@ -77,6 +87,11 @@ export default function Dashboard() {
             try {
               await confirmPayment(sessionId); // backend verify + record purchase
               sessionStorage.setItem(key, '1'); // stop double-confirm on reload
+
+              // clear any pending values we might have used
+              sessionStorage.removeItem('pendingStatus');
+              sessionStorage.removeItem('pendingSessionId');
+
               confetti({ particleCount: 140, spread: 70, origin: { y: 0.6 } });
               if (!toastShownRef.current) {
                 toast.success('Payment confirmed! Your item is now in Purchased.');
@@ -89,10 +104,11 @@ export default function Dashboard() {
               toast.error(msg);
             }
           }
-          cleanUrl();
+          // Only clean if URL actually had params
+          if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         } else if (status === 'cancel') {
           toast.info('Checkout canceled.');
-          cleanUrl();
+          if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         }
 
         // Load data for first paint (or refresh after confirmation)
@@ -106,8 +122,7 @@ export default function Dashboard() {
 
     run();
     // We only want to run this on first mount
-    // eslint-disable-next-line
-    // react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
