@@ -123,7 +123,7 @@ export default function Dashboard() {
     run();
     // We only want to run this on first mount
     // eslint-disable-next-line 
-    // react-hooks/exhaustive-deps
+  
   }, []);
 
   return (
