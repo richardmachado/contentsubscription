@@ -1,5 +1,5 @@
 // server.js
-require('dotenv').config({ override: true });
+require('dotenv').config() //{ override: true });
 
 /* ============== Optional IPv4 DNS patch ============== */
 if (process.env.FORCE_IPV4 === 'true') {
