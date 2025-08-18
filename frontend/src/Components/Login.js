@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import './Login.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
-console.log( "login", API_BASE );
+console.log('login', API_BASE);
 
 function Login({ setToken }) {
   const [mode, setMode] = useState('login'); // 'login' or 'signup'

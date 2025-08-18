@@ -11,4 +11,3 @@ STRIPE*SECRET=sk_test... (should start with sk)
 STRIPE_WEBHOOK_SECRET=whsec*...(when you run command "
 stripe listen --forward-to localhost:5000/webhook
 " on your terminal, it will give you this webhook secret)
-

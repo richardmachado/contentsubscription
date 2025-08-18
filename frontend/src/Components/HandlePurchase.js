@@ -1,5 +1,5 @@
 const handlePurchase = async (itemId, token) => {
-  const res = await fetch( '${API_BASE}/ api / buy / ' + itemId, {
+  const res = await fetch('${API_BASE}/ api / buy / ' + itemId, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token },
   });

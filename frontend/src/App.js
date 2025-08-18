@@ -1,3 +1,4 @@
+// src/App.js
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -21,49 +22,66 @@ function Navigation() {
 
   return (
     <nav className={navClass}>
-      <Link to="/dashboard">Dashboard</Link>
+      <Link to="/">Dashboard</Link>
       {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
-      {user && (
-        <Link to="/" onClick={logout}>
+      {user ? (
+        <Link to="/login" onClick={logout}>
           Logout
         </Link>
+      ) : (
+        <Link to="/login">Login</Link>
       )}
     </nav>
   );
 }
 
 function AppRoutes() {
-  const { token, user, login } = useAuth();
+  const { user, login } = useAuth();
 
   return (
     <>
       <Navigation />
       <Routes>
-        <Route path="/" element={<Login setToken={login} />} />
+        {/* Public login page */}
+        <Route path="/login" element={<Login setToken={login} />} />
+
+        {/* Option A: Dashboard is the home page so Stripe can return to "/" */}
         <Route
-          path="/dashboard"
+          path="/"
           element={
-            <ProtectedRoute token={token}>
+            <ProtectedRoute redirectTo="/login">
               <Dashboard />
             </ProtectedRoute>
           }
         />
+
+        {/* Back-compat: if anything points to /dashboard, send to / */}
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+
+        {/* Protected pages */}
         <Route
           path="/subscribe"
           element={
-            <ProtectedRoute token={token}>
-              <Subscribe token={token} />
+            <ProtectedRoute redirectTo="/login">
+              <Subscribe />
             </ProtectedRoute>
           }
         />
         <Route
           path="/admin-dashboard"
-          element={user?.is_admin ? <AdminDashboard /> : <Navigate to="/dashboard" />}
+          element={
+            <ProtectedRoute redirectTo="/login">
+              {user?.is_admin ? <AdminDashboard /> : <Navigate to="/" replace />}
+            </ProtectedRoute>
+          }
         />
+
+        {/* Public/free pages */}
         <Route path="/learn-node" element={<NodeGuide />} />
         <Route path="/data-types" element={<JSDataTypesGuide />} />
         <Route path="/home" element={<LandingPage />} />
       </Routes>
+
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </>
   );

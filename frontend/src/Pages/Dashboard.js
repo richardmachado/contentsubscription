@@ -1,3 +1,4 @@
+// src/Pages/Dashboard.js
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'react-toastify';
@@ -12,12 +13,14 @@ import {
   fetchContent,
   fetchProfile,
   updateProfile as saveProfile,
+  confirmPayment, // <-- new helper from api.js
 } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
 
 export default function Dashboard() {
-  const { token, logout } = useAuth(); // ⬅️ pull token if your context provides it
+  const { token, logout } = useAuth();
+
   const [items, setItems] = useState([]);
   const [tab, setTab] = useState('purchased');
   const [showModal, setShowModal] = useState(false);
@@ -25,72 +28,87 @@ export default function Dashboard() {
   const [liveHelpHours, setLiveHelpHours] = useState(0);
   const toastShownRef = useRef(false);
 
+  // Keep axios Authorization in sync with our token
   useEffect(() => {
-    // Ensure axios has Authorization for all calls
     setAuthToken(token || localStorage.getItem('token') || undefined);
+  }, [token]);
 
-    const loadData = async () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status'); // "success" | "cancelled" | null
+    const sessionId = params.get('session_id'); // Stripe Checkout session ID (if success)
+
+    const cleanUrl = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('status');
+      url.searchParams.delete('session_id');
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    };
+
+    const loadCore = async () => {
+      const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
+      setItems(fetchedItems);
+      setProfile(fetchedProfile);
+    };
+
+    const loadLiveHelp = async () => {
       try {
-        // --- Handle Stripe redirect ---
-        const url = new URL(window.location.href);
-        const sessionId = url.searchParams.get('session_id');
-
-        if (sessionId && !toastShownRef.current) {
-          try {
-            const { data } = await api.get('/api/confirm-payment', {
-              params: { session_id: sessionId },
-            });
-
-            if (data?.ok || data?.success) {
-              // After confirm, immediately reload content so Purchased reflects the new item
-              const [freshItems, freshProfile] = await Promise.all([
-                fetchContent(),
-                fetchProfile(),
-              ]);
-              setItems(freshItems);
-              setProfile(freshProfile);
-
-              confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
-              toast.success('✅ Payment successful! You now have access to your content.');
-              toastShownRef.current = true;
-
-              // Clean the URL so reloads don’t re-confirm
-              url.searchParams.delete('session_id');
-              window.history.replaceState({}, document.title, url.pathname + url.search);
-
-              // Make sure the Purchased tab is visible
-              setTab('purchased');
-            } else {
-              console.warn('Confirm payment response (not ok):', data);
-            }
-          } catch (e) {
-            // If confirm fails (e.g., not mounted), we still proceed—webhook may update later
-            console.warn(
-              'Confirm payment failed; proceeding with normal load:',
-              e?.response?.data || e.message
-            );
-          }
+        const { data } = await api.get('/api/live-help-hours', { validateStatus: () => true });
+        if (typeof data === 'string' && data.startsWith('<')) {
+          console.error(
+            '[live-help-hours] HTML response (wrong host/route):',
+            data.slice(0, 120),
+            '...'
+          );
+          return;
         }
-
-        // --- Load content + profile (first paint / normal path) ---
-        const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
-        setItems(fetchedItems);
-        setProfile(fetchedProfile);
-
-        // --- Live help hours (non-blocking) ---
-        try {
-          const { data: hoursData } = await api.get('/api/live-help-hours');
-          setLiveHelpHours(hoursData?.totalHours ?? 0);
-        } catch {
-          /* ignore */
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
+        setLiveHelpHours(data?.totalHours ?? 0);
+      } catch {
+        // non-critical
       }
     };
 
-    loadData();
-  }, [token]); // re-run if token changes
+    const run = async () => {
+      try {
+        // Handle success/cancel landing first so data reflects the payment immediately
+        if (status === 'success' && sessionId) {
+          const key = `confirmed:${sessionId}`;
+          if (!sessionStorage.getItem(key)) {
+            try {
+              await confirmPayment(sessionId); // backend verify + record purchase
+              sessionStorage.setItem(key, '1'); // stop double-confirm on reload
+              confetti({ particleCount: 140, spread: 70, origin: { y: 0.6 } });
+              if (!toastShownRef.current) {
+                toast.success('Payment confirmed! Your item is now in Purchased.');
+                toastShownRef.current = true;
+              }
+              setTab('purchased');
+            } catch (err) {
+              console.warn('[confirm-payment] failed:', err?.response?.status, err?.message);
+              const msg = err?.response?.data?.error || 'Could not confirm payment.';
+              toast.error(msg);
+            }
+          }
+          cleanUrl();
+        } else if (status === 'cancel') {
+          toast.info('Checkout canceled.');
+          cleanUrl();
+        }
+
+        // Load data for first paint (or refresh after confirmation)
+        await loadCore();
+        await loadLiveHelp();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast.error('Could not load your dashboard.');
+      }
+    };
+
+    run();
+    // We only want to run this on first mount
+    // eslint-disable-next-line
+    // react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="container">
@@ -121,9 +139,7 @@ export default function Dashboard() {
         ) : (
           <button
             className="book-session-button"
-            onClick={() => {
-              window.open('https://calendly.com/rich92105/15min', '_blank');
-            }}
+            onClick={() => window.open('https://calendly.com/rich92105/15min', '_blank')}
           >
             📅 Book a Live Session 🧑‍💻
           </button>

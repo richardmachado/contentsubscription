@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import { api } from '../utils/api';
 const API_BASE = process.env.REACT_APP_API_BASE || '';
-console.log("Contenttabs", API_BASE );
+console.log('Contenttabs', API_BASE);
 
 export default function ContentTabs({ tab, setTab, items, setItems }) {
   const { token } = useAuth();
@@ -23,30 +23,29 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
     const quantity = quantities[item.id] || 1;
     setLoadingItemId(item.id);
 
-try {
-  const response = await toast.promise(
-    fetch(`${API_BASE}/api/buy/${item.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ quantity }),
-    }),
-    {
-      pending: 'Preparing your checkout…',
-      success: 'Redirecting to Stripe!',
-      error: 'Failed to start checkout. Please try again.',
-    },
-    { toastId: `stripe-${item.id}`, position: 'top-right' }
-  );
+    try {
+      const response = await toast.promise(
+        fetch(`${API_BASE}/api/buy/${item.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ quantity }),
+        }),
+        {
+          pending: 'Preparing your checkout…',
+          success: 'Redirecting to Stripe!',
+          error: 'Failed to start checkout. Please try again.',
+        },
+        { toastId: `stripe-${item.id}`, position: 'top-right' }
+      );
 
-  const data = await response.json();
-  if (data.url) window.location.assign(data.url);
-} catch (err) {
-  console.error('Stripe checkout failed:', err);
-}
-
+      const data = await response.json();
+      if (data.url) window.location.assign(data.url);
+    } catch (err) {
+      console.error('Stripe checkout failed:', err);
+    }
   };
 
   const handleView = async (contentId) => {
