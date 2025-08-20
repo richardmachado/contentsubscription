@@ -6,14 +6,17 @@ export default function ProtectedRoute({ children, redirectTo = '/login' }) {
   const { token, bootstrapped } = useAuth();
   const location = useLocation();
 
-  // Wait until we restore token from localStorage on hard reloads
-  if (!bootstrapped) return null; // or a tiny loader/spinner
+  if (!bootstrapped) return null;
 
-  // Not logged in → send to login and remember where we were going
   if (!token) {
+    const sp = new URLSearchParams(location.search);
+    const status = sp.get('status');
+    const sid = sp.get('session_id');
+    if (status && sid) {
+      sessionStorage.setItem('pendingStatus', status);
+      sessionStorage.setItem('pendingSessionId', sid);
+    }
     return <Navigate to={redirectTo} replace state={{ from: location }} />;
   }
-
-  // Authenticated → render protected content
   return children;
 }

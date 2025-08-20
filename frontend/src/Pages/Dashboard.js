@@ -1,4 +1,3 @@
-// src/Pages/Dashboard.js
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'react-toastify';
@@ -28,7 +27,6 @@ export default function Dashboard() {
   const [liveHelpHours, setLiveHelpHours] = useState(0);
   const toastShownRef = useRef(false);
 
-  // Keep axios Authorization in sync with our token
   useEffect(() => {
     setAuthToken(token || localStorage.getItem('token') || undefined);
   }, [token]);
@@ -36,9 +34,9 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let status = params.get('status'); // "success" | "cancel" | null
-    let sessionId = params.get('session_id'); // Stripe Checkout session ID (if success)
+    let sessionId = params.get('session_id'); // Stripe Checkout session ID
 
-    // If we got bounced to /login first, ProtectedRoute may have stashed these:
+    // Fallback from ProtectedRoute if we hit /login first
     if (!status && !sessionId) {
       const pStatus = sessionStorage.getItem('pendingStatus');
       const pSid = sessionStorage.getItem('pendingSessionId');
@@ -65,30 +63,21 @@ export default function Dashboard() {
       try {
         const { data } = await api.get('/api/live-help-hours', { validateStatus: () => true });
         if (typeof data === 'string' && data.startsWith('<')) {
-          console.error(
-            '[live-help-hours] HTML response (wrong host/route):',
-            data.slice(0, 120),
-            '...'
-          );
+          console.error('[live-help-hours] HTML response:', data.slice(0, 120), '...');
           return;
         }
         setLiveHelpHours(data?.totalHours ?? 0);
-      } catch {
-        // non-critical
-      }
+      } catch {}
     };
 
     const run = async () => {
       try {
-        // Handle success/cancel landing first so data reflects the payment immediately
         if (status === 'success' && sessionId) {
           const key = `confirmed:${sessionId}`;
           if (!sessionStorage.getItem(key)) {
             try {
-              await confirmPayment(sessionId); // backend verify + record purchase
-              sessionStorage.setItem(key, '1'); // stop double-confirm on reload
-
-              // clear any pending values we might have used
+              await confirmPayment(sessionId);
+              sessionStorage.setItem(key, '1');
               sessionStorage.removeItem('pendingStatus');
               sessionStorage.removeItem('pendingSessionId');
 
@@ -99,19 +88,17 @@ export default function Dashboard() {
               }
               setTab('purchased');
             } catch (err) {
-              console.warn('[confirm-payment] failed:', err?.response?.status, err?.message);
               const msg = err?.response?.data?.error || 'Could not confirm payment.';
+              console.warn('[confirm-payment] failed:', err?.response?.status, err?.message);
               toast.error(msg);
             }
           }
-          // Only clean if URL actually had params
           if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         } else if (status === 'cancel') {
           toast.info('Checkout canceled.');
           if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         }
 
-        // Load data for first paint (or refresh after confirmation)
         await loadCore();
         await loadLiveHelp();
       } catch (error) {
@@ -121,9 +108,7 @@ export default function Dashboard() {
     };
 
     run();
-    // We only want to run this on first mount
-    // eslint-disable-next-line 
-  
+    // eslint-disable-next-line
   }, []);
 
   return (
