@@ -9,13 +9,13 @@ const pool = dbExport.pool || dbExport;
 // GET /api/profile  (auth is applied in server.js via requireAuth)
 router.get('/', async (req, res, next) => {
   try {
-    // Example: return the current user's profile. Adjust query to your schema.
-    // If your profile lives on "users", change the SQL accordingly.
     const { rows } = await pool.query(
-      `SELECT id, username, name, phone
-         FROM users
-        WHERE id = $1
-        LIMIT 1`,
+      `
+      SELECT id, username, email, name, phone, is_admin
+        FROM public.users
+       WHERE id = $1
+       LIMIT 1
+      `,
       [req.user.id]
     );
     res.json(rows[0] || null);
@@ -24,17 +24,29 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// PUT /api/profile (update)
+// PUT /api/profile  — update selected fields on public.users
 router.put('/', async (req, res, next) => {
   try {
-    const { full_name, phone } = req.body;
+    // Accept the fields you want to allow updating:
+    const { name, phone, email } = req.body;
+
     const { rows } = await pool.query(
-      `UPDATE profiles
-          SET full_name = $1, phone = $2
-        WHERE user_id = $3
-      RETURNING id, full_name, phone`,
-      [full_name ?? null, phone ?? null, req.user.id]
+      `
+      UPDATE public.users
+         SET name  = COALESCE($1, name),
+             phone = COALESCE($2, phone),
+             email = COALESCE($3, email)
+       WHERE id = $4
+   RETURNING id, username, email, name, phone, is_admin
+      `,
+      [
+        name ?? null, // pass null to leave unchanged via COALESCE
+        phone ?? null,
+        email ?? null,
+        req.user.id,
+      ]
     );
+
     res.json(rows[0]);
   } catch (err) {
     next(err);
