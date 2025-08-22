@@ -1,25 +1,26 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+// src/Components/Login.jsx
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
-function Login({ setToken }) {
-  const [mode, setMode] = useState('login'); // 'login' or 'signup'
+const API_BASE =
+  (import.meta?.env && import.meta.env.VITE_API_URL) || process.env.REACT_APP_API_BASE || '';
 
+function Login({ setToken: setTokenProp }) {
+  const [mode, setMode] = useState('login');
   return (
     <div className="login-container">
       <div className="flip-container">
         <div className={`flipper ${mode === 'signup' ? 'flipped' : ''}`}>
           <div className="front">
-            <FormContent mode="login" setToken={setToken} />
+            <FormContent mode="login" setTokenProp={setTokenProp} />
           </div>
           <div className="back">
-            <FormContent mode="signup" setToken={setToken} />
+            <FormContent mode="signup" setTokenProp={setTokenProp} />
           </div>
         </div>
       </div>
-
-      {/* 🔥 THIS is the visible mode toggle button */}
       <div className="auth-toggle-wrapper">
         {mode === 'login' ? (
           <>
@@ -41,38 +42,64 @@ function Login({ setToken }) {
   );
 }
 
-function FormContent({ mode, setToken }) {
+function FormContent({ mode, setTokenProp }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login: loginCtx, token, bootstrapped } = useAuth();
+
+  const applyToken = setTokenProp || loginCtx;
+
+  // If we somehow hit /login while already logged in, bounce to home (+ keep any ?status=...)
+  useEffect(() => {
+    if (bootstrapped && token) {
+      navigate('/' + (location.search || ''), { replace: true });
+    }
+  }, [bootstrapped, token, location.search, navigate]);
 
   const submit = async () => {
     const endpoint = mode === 'login' ? '/api/login' : '/api/register';
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      const txt = await res.text();
+      let data;
+      try {
+        data = JSON.parse(txt);
+      } catch {
+        setMsg('Server returned HTML instead of JSON—check API base URL.');
+        return;
+      }
 
       if (mode === 'login') {
-        handleLoginResponse(data);
-      } else {
-        if (data.success) {
-          const loginRes = await fetch(`http://localhost:5000/api/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-          });
-          const loginData = await loginRes.json();
-          handleLoginResponse(loginData);
-        } else {
-          setMsg(data.error || 'Signup failed');
+        return handleLoginResponse(data);
+      }
+
+      if (data.success) {
+        // auto-login after signup
+        const loginRes = await fetch(`${API_BASE}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const loginTxt = await loginRes.text();
+        let loginData;
+        try {
+          loginData = JSON.parse(loginTxt);
+        } catch {
+          setMsg('Server returned HTML instead of JSON during login.');
+          return;
         }
+        return handleLoginResponse(loginData);
+      } else {
+        setMsg(data.error || 'Signup failed');
       }
     } catch (err) {
       setMsg('An error occurred. Please try again.');
@@ -81,13 +108,24 @@ function FormContent({ mode, setToken }) {
   };
 
   const handleLoginResponse = (data) => {
-    if (data.token) {
-      setToken(data.token);
-      const decoded = jwtDecode(data.token);
-      navigate(decoded.is_admin ? '/admin-dashboard' : '/dashboard');
-    } else {
-      setMsg(data.error || 'Login failed');
+    if (!data?.token) {
+      setMsg(data?.error || 'Login failed');
+      return;
     }
+
+    // 1) Persist immediately (avoid race)
+    try {
+      localStorage.setItem('token', data.token);
+    } catch {}
+
+    // 2) Update context (sets axios header, user, etc.)
+    applyToken(data.token);
+
+    // 3) Navigate back to where we came from (preserve Stripe params)
+    const fromPath = location.state?.from?.pathname || '/';
+    const fromSearch = location.state?.from?.search || '';
+    // next tick to allow state to flush
+    setTimeout(() => navigate(fromPath + fromSearch, { replace: true }), 0);
   };
 
   return (

@@ -1,18 +1,25 @@
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
-import { Link } from 'react-router-dom';
 
-import { fetchContent, fetchProfile, updateProfile as saveProfile } from '../utils/api';
-
+import {
+  api,
+  setAuthToken,
+  fetchContent,
+  fetchProfile,
+  updateProfile as saveProfile,
+  confirmPayment,
+} from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import '../Dashboard.css';
 
 export default function Dashboard() {
-  const { logout } = useAuth();
+  const { token, logout } = useAuth();
+
   const [items, setItems] = useState([]);
   const [tab, setTab] = useState('purchased');
   const [showModal, setShowModal] = useState(false);
@@ -21,54 +28,87 @@ export default function Dashboard() {
   const toastShownRef = useRef(false);
 
   useEffect(() => {
-    const loadData = async () => {
+    setAuthToken(token || localStorage.getItem('token') || undefined);
+  }, [token]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let status = params.get('status'); // "success" | "cancel" | null
+    let sessionId = params.get('session_id'); // Stripe Checkout session ID
+
+    // Fallback from ProtectedRoute if we hit /login first
+    if (!status && !sessionId) {
+      const pStatus = sessionStorage.getItem('pendingStatus');
+      const pSid = sessionStorage.getItem('pendingSessionId');
+      if (pStatus && pSid) {
+        status = pStatus;
+        sessionId = pSid;
+      }
+    }
+
+    const cleanUrl = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('status');
+      url.searchParams.delete('session_id');
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    };
+
+    const loadCore = async () => {
+      const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
+      setItems(fetchedItems);
+      setProfile(fetchedProfile);
+    };
+
+    const loadLiveHelp = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('session_id');
+        const { data } = await api.get('/api/live-help-hours', { validateStatus: () => true });
+        if (typeof data === 'string' && data.startsWith('<')) {
+          console.error('[live-help-hours] HTML response:', data.slice(0, 120), '...');
+          return;
+        }
+        setLiveHelpHours(data?.totalHours ?? 0);
+      } catch {}
+    };
 
-        if (sessionId && !toastShownRef.current) {
-          const res = await fetch(
-            `http://localhost:5000/api/confirm-payment?session_id=${sessionId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-              },
+    const run = async () => {
+      try {
+        if (status === 'success' && sessionId) {
+          const key = `confirmed:${sessionId}`;
+          if (!sessionStorage.getItem(key)) {
+            try {
+              await confirmPayment(sessionId);
+              sessionStorage.setItem(key, '1');
+              sessionStorage.removeItem('pendingStatus');
+              sessionStorage.removeItem('pendingSessionId');
+
+              confetti({ particleCount: 140, spread: 70, origin: { y: 0.6 } });
+              if (!toastShownRef.current) {
+                toast.success('Payment confirmed! Your item is now in Purchased.');
+                toastShownRef.current = true;
+              }
+              setTab('purchased');
+            } catch (err) {
+              const msg = err?.response?.data?.error || 'Could not confirm payment.';
+              console.warn('[confirm-payment] failed:', err?.response?.status, err?.message);
+              toast.error(msg);
             }
-          );
-
-          const data = await res.json();
-
-          if (data.success) {
-            confetti({
-              particleCount: 150,
-              spread: 90,
-              origin: { y: 0.6 },
-            });
-
-            toast.success('✅ Payment successful! You now have access to your content.');
-            toastShownRef.current = true;
-
-            window.history.replaceState({}, document.title, '/dashboard');
           }
+          if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
+        } else if (status === 'cancel') {
+          toast.info('Checkout canceled.');
+          if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         }
 
-        const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
-        setItems(fetchedItems);
-        setProfile(fetchedProfile);
-
-        const hoursRes = await fetch('http://localhost:5000/api/live-help-hours', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const hoursData = await hoursRes.json();
-        setLiveHelpHours(hoursData.totalHours);
+        await loadCore();
+        await loadLiveHelp();
       } catch (error) {
         console.error('Error loading data:', error);
+        toast.error('Could not load your dashboard.');
       }
     };
 
-    loadData();
+    run();
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -100,9 +140,7 @@ export default function Dashboard() {
         ) : (
           <button
             className="book-session-button"
-            onClick={() => {
-              window.open('https://calendly.com/rich92105/15min', '_blank');
-            }}
+            onClick={() => window.open('https://calendly.com/rich92105/15min', '_blank')}
           >
             📅 Book a Live Session 🧑‍💻
           </button>
@@ -129,7 +167,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* ✅ Pass full items + setItems */}
       <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
 
       {showModal && (
@@ -140,9 +177,7 @@ export default function Dashboard() {
           logout={logout}
           onClose={(saved) => {
             setShowModal(false);
-            if (saved) {
-              toast.success('✅ Profile updated successfully!');
-            }
+            if (saved) toast.success('✅ Profile updated successfully!');
           }}
         />
       )}

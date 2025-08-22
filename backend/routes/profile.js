@@ -1,28 +1,44 @@
+// backend/routes/profile.js
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
-const { auth } = require('../middleware/auth');
 
-router.get('/', auth, async (req, res) => {
-  const result = await pool.query('SELECT name, phone, email FROM users WHERE id = $1', [
-    req.user.id,
-  ]);
-  res.json(result.rows[0] || {});
+// Handle both export styles for db: module.exports = pool OR { pool }
+const dbExport = require('../db');
+const pool = dbExport.pool || dbExport;
+
+// GET /api/profile  (auth is applied in server.js via requireAuth)
+router.get('/', async (req, res, next) => {
+  try {
+    // Example: return the current user's profile. Adjust query to your schema.
+    // If your profile lives on "users", change the SQL accordingly.
+    const { rows } = await pool.query(
+      `SELECT id, username, name, phone
+         FROM users
+        WHERE id = $1
+        LIMIT 1`,
+      [req.user.id]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/', auth, async (req, res) => {
-  const { name, phone, email } = req.body;
-  const digitsOnly = phone.replace(/\D/g, '');
-  if (!/^\d{10}$/.test(digitsOnly)) {
-    return res.status(400).json({ error: 'Invalid phone number format' });
+// PUT /api/profile (update)
+router.put('/', async (req, res, next) => {
+  try {
+    const { full_name, phone } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE profiles
+          SET full_name = $1, phone = $2
+        WHERE user_id = $3
+      RETURNING id, full_name, phone`,
+      [full_name ?? null, phone ?? null, req.user.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
   }
-  await pool.query('UPDATE users SET name = $1, phone = $2, email = $3 WHERE id = $4', [
-    name,
-    phone,
-    email,
-    req.user.id,
-  ]);
-  res.json({ success: true });
 });
 
 module.exports = router;

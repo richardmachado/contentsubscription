@@ -1,6 +1,8 @@
+const API_BASE = process.env.REACT_APP_API_BASE || '';
+
 export default function Subscribe({ token }) {
   const goToCheckout = async () => {
-    const res = await fetch('http://localhost:5000/api/checkout', {
+    const res = await fetch('%{API_BASE}/api/checkout', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token },
     });

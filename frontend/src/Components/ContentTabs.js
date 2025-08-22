@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
+import { api } from '../utils/api';
+const API_BASE = process.env.REACT_APP_API_BASE || '';
+console.log('Contenttabs', API_BASE);
+
 export default function ContentTabs({ tab, setTab, items, setItems }) {
   const { token } = useAuth();
   const [quantities, setQuantities] = useState({});
@@ -21,7 +25,7 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
 
     try {
       const response = await toast.promise(
-        fetch(`http://localhost:5000/api/buy/${item.id}`, {
+        fetch(`${API_BASE}/api/buy/${item.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -38,13 +42,8 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
       );
 
       const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setLoadingItemId(null);
-      }
+      if (data.url) window.location.assign(data.url);
     } catch (err) {
-      setLoadingItemId(null);
       console.error('Stripe checkout failed:', err);
     }
   };
@@ -60,7 +59,7 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
     setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: true } : it)));
 
     try {
-      const res = await fetch(`http://localhost:5000/api/mark-viewed/${contentId}`, {
+      const res = await fetch(`${API_BASE}/api/mark-viewed/${contentId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,65 +1,92 @@
-// utils/api.js
+// src/utils/api.js
+// CRA-safe API client with robust env & sane fallbacks
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api';
+const HARD_CODED_PROD = 'https://contentsubscriptionbackend.onrender.com'; // your backend origin (no /api)
+const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-export const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
+// Allow either CRA or Vite style envs (future-proof)
+const ENV_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
+  process.env.REACT_APP_API_BASE ||
+  null;
 
-// Attach token once the user logs in (and on app boot if token exists)
-export function setAuthToken(token) {
-  if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common.Authorization;
-  }
-}
-
-// OPTIONAL: global response error handling
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    // e.g. if (err.response?.status === 401) logout();
-    return Promise.reject(err);
-  }
+// If an env override exists, use it. Otherwise:
+//  - localhost -> local server
+//  - non-localhost -> hard-coded prod backend
+const API_ORIGIN = (ENV_BASE || (isLocalhost ? 'http://localhost:5000' : HARD_CODED_PROD)).replace(
+  /\/+$/,
+  ''
 );
 
-// -------- API calls --------
+// One Axios instance for the whole app.
+// NOTE: Your routes already include `/api/...`, so baseURL is just the origin.
+export const api = axios.create({
+  baseURL: API_ORIGIN,
+  // If you ever switch to cookie-based auth, flip this to true and ensure CORS credentials on server:
+  withCredentials: false,
+  timeout: 20000,
+});
+
+// Set/unset Bearer token
+export function setAuthToken(token) {
+  if (token) api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  else delete api.defaults.headers.common.Authorization;
+}
+
+// Debug where requests go
+if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line no-console
+  console.log('[API] baseURL =', api.defaults.baseURL);
+}
+api.interceptors.request.use((cfg) => {
+  // eslint-disable-next-line no-console
+  console.log('[API req]', (cfg.baseURL || '') + (cfg.url || ''));
+  return cfg;
+});
+
+/* ================= Convenience functions ================= */
 
 export async function fetchContent() {
-  const res = await api.get('/content');
-  // Expect backend to include `viewed` for purchased items.
-  // If your backend wraps payload: { items: [...] }, return res.data.items instead.
-  return res.data;
+  const { data } = await api.get('/api/content');
+  return data;
 }
 
 export async function fetchProfile() {
-  const res = await api.get('/profile');
-  const { name = '', phone = '', email = '' } = res.data || {};
-  return { name, phone, email };
+  const { data } = await api.get('/api/profile');
+  return data;
 }
 
-export async function updateProfile(profile) {
-  // match your server method: POST/PUT/PATCH
-  const res = await api.post('/profile', profile);
-  if (!res.data?.success) {
-    throw new Error(res.data?.error || 'Profile update failed');
-  }
-  return res.data;
+export async function updateProfile(updates) {
+  const { data } = await api.put('/api/profile', updates);
+  return data;
 }
 
 export async function fetchAdminUsers() {
-  const res = await api.get('/admin/users');
-  if (!Array.isArray(res.data)) throw new Error('Expected an array of users');
-  return res.data;
+  const { data } = await api.get('/api/admin/users');
+  return data;
 }
 
-export async function markViewed(contentId) {
-  // use the same axios instance so the Authorization header is included
-  const res = await api.post(`/mark-viewed/${contentId}`);
-  // backend should 200 with rowCount > 0, otherwise 404
-  if (res.status !== 200) throw new Error('Failed to mark viewed');
-  return true;
+export async function login(username, password) {
+  const { data } = await api.post('/api/login', { username, password });
+  return data;
 }
+
+export async function register(username, password) {
+  const { data } = await api.post('/api/register', { username, password });
+  return data;
+}
+
+export async function createCheckout(id, quantity = 1) {
+  const { data } = await api.post(`/api/buy/${id}`, { quantity });
+  return data;
+}
+
+export async function markViewed(id) {
+  const { data } = await api.post(`/api/mark-viewed/${id}`);
+  return data;
+}
+
+// NEW: confirm payment helper for the success redirect flow
+export const confirmPayment = (sessionId) =>
+  api.get(`/api/confirm-payment?session_id=${encodeURIComponent(sessionId)}`);

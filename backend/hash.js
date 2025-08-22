@@ -1,4 +1,4 @@
 // use to hash passwords when creating users
 
 const bcrypt = require('bcrypt');
-bcrypt.hash('password1234', 10).then((hash) => console.log(hash));
+bcrypt.hash('password123', 10).then((hash) => console.log(hash));
