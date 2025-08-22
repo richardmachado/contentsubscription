@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Stripe = require('stripe');
-const { query } = require('../db'); // keep your helper; it wraps pool.query
+const { query } = require('../db');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -10,13 +10,12 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 router.get('/', async (req, res, next) => {
   try {
     const { session_id } = req.query;
-    const userId = req.user?.id; // from auth middleware
+    const userId = req.user?.id;
 
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     if (!session_id) return res.status(400).json({ error: 'Missing session_id' });
 
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      // expand so we can read price/product metadata if needed
       expand: ['line_items', 'line_items.data.price.product', 'payment_intent'],
     });
 
@@ -29,25 +28,23 @@ router.get('/', async (req, res, next) => {
         .json({ error: 'Payment not completed', status: session.payment_status });
     }
 
-    // Optionally verify session belongs to this user (recommended)
+    // ✅ Verify the session belongs to *this* user (prevents cross-origin/user mismatch)
     const metaUserId = session.metadata?.user_id;
     if (metaUserId && String(metaUserId) !== String(userId)) {
       return res.status(403).json({ error: 'This session does not belong to the current user' });
     }
 
-    // Map purchased items → our content_id(s)
-    // Prefer metadata.content_id on the *Price* (or Product) so a single route works for many items.
+    // Map purchased items to content IDs
     const lineItems = session.line_items?.data || [];
-    let mapped = lineItems
+    const mapped = lineItems
       .map((li) => {
         const price = li.price;
         const product = price?.product;
         const contentId =
           price?.metadata?.content_id ||
           product?.metadata?.content_id ||
-          session.metadata?.content_id || // fallback if you set it on the session
+          session.metadata?.content_id ||
           null;
-
         return {
           contentId,
           quantity: li.quantity || Number(session.metadata?.quantity || 1) || 1,
@@ -61,8 +58,7 @@ router.get('/', async (req, res, next) => {
         .json({ error: 'No content_id found on line items or session metadata' });
     }
 
-    // Upsert into public.purchased_content
-    // Table columns (from your screenshot): id, user_id, content_id, quantity, viewed, created_at, purchased_at
+    // Upsert purchases
     await query('BEGIN');
     for (const m of mapped) {
       await query(
@@ -79,7 +75,6 @@ router.get('/', async (req, res, next) => {
     }
     await query('COMMIT');
 
-    // Return what the UI needs (optional)
     const { rows: purchasedNow } = await query(
       `
       SELECT c.*, TRUE AS purchased, pc.purchased_at
