@@ -1,1 +1,1 @@
-this project uses npm run dev to run frontend and backend concurrently
+app.use((req, _res, next) => { console.log('[REQ]', req.method, req.path, 'origin=', req.get('origin')); next(); });
