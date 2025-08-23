@@ -1,7 +1,7 @@
+// src/Pages/Dashboard.js
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
 
 import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
@@ -15,18 +15,19 @@ import {
   confirmPayment,
 } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import '../Dashboard.css';
+import './Dashboard.css'; // adjust to ../Dashboard.css if your CSS lives one folder up
 
 export default function Dashboard() {
   const { token, logout } = useAuth();
 
   const [items, setItems] = useState([]);
-  const [tab, setTab] = useState('purchased');
+  const [tab, setTab] = useState('free'); // show Free tab first
   const [showModal, setShowModal] = useState(false);
   const [profile, setProfile] = useState(null);
   const [liveHelpHours, setLiveHelpHours] = useState(0);
   const toastShownRef = useRef(false);
 
+  // Keep axios Authorization in sync with our token
   useEffect(() => {
     setAuthToken(token || localStorage.getItem('token') || undefined);
   }, [token]);
@@ -63,21 +64,24 @@ export default function Dashboard() {
       try {
         const { data } = await api.get('/api/live-help-hours', { validateStatus: () => true });
         if (typeof data === 'string' && data.startsWith('<')) {
-          console.error('[live-help-hours] HTML response:', data.slice(0, 120), '...');
+          // HTML means wrong host/route proxied — ignore for UX
           return;
         }
         setLiveHelpHours(data?.totalHours ?? 0);
-      } catch {}
+      } catch {
+        // non-critical
+      }
     };
 
     const run = async () => {
       try {
+        // Handle success/cancel landing first so data reflects the payment immediately
         if (status === 'success' && sessionId) {
           const key = `confirmed:${sessionId}`;
           if (!sessionStorage.getItem(key)) {
             try {
-              await confirmPayment(sessionId);
-              sessionStorage.setItem(key, '1');
+              await confirmPayment(sessionId); // backend verify + record purchase
+              sessionStorage.setItem(key, '1'); // stop double-confirm on reload
               sessionStorage.removeItem('pendingStatus');
               sessionStorage.removeItem('pendingSessionId');
 
@@ -99,6 +103,7 @@ export default function Dashboard() {
           if (new URLSearchParams(window.location.search).get('status')) cleanUrl();
         }
 
+        // Load data for first paint (or refresh after confirmation)
         await loadCore();
         await loadLiveHelp();
       } catch (error) {
@@ -147,27 +152,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="free-content-card">
-        <Link to="/learn-node" className="free-guide-link">
-          <div className="guide-card">
-            <p>Free content to get you started</p>
-            <h3>🆓 Getting Started with Node.js</h3>
-            <p>Beginner-friendly intro to building with JavaScript. No purchase needed.</p>
-          </div>
-        </Link>
-      </div>
-
-      <div className="free-content-card">
-        <Link to="/data-types" className="free-guide-link">
-          <div className="guide-card">
-            <p>More free content</p>
-            <h3>Javascript data types</h3>
-            <p>Beginner-friendly intro to data types in javascript</p>
-          </div>
-        </Link>
-      </div>
-
-      <ContentTabs tab={tab} setTab={setTab} items={items} setItems={setItems} />
+      {/* Three-tab content */}
+      <ContentTabs tab={tab} setTab={setTab} items={items} />
 
       {showModal && (
         <ProfileModal
