@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
-const API_BASE =
-  (import.meta?.env && import.meta.env.VITE_API_URL) || process.env.REACT_APP_API_BASE || '';
+const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 export default function ContentTabs({ tab, setTab, items }) {
   const { token } = useAuth();
