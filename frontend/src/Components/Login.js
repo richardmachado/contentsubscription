@@ -4,8 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
-const API_BASE =
-  (import.meta?.env && import.meta.env.VITE_API_URL) || process.env.REACT_APP_API_BASE || '';
+const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 function Login({ setToken: setTokenProp }) {
   const [mode, setMode] = useState('login');

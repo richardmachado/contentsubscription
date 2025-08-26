@@ -1,27 +1,58 @@
+// src/Components/ContentTabs.js
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
-import { api } from '../utils/api';
+// Use CRA/Webpack env to avoid import.meta warnings
 const API_BASE = process.env.REACT_APP_API_BASE || '';
-console.log('Contenttabs', API_BASE);
 
-export default function ContentTabs({ tab, setTab, items, setItems }) {
+export default function ContentTabs({ tab, setTab, items }) {
   const { token } = useAuth();
   const [quantities, setQuantities] = useState({});
   const [loadingItemId, setLoadingItemId] = useState(null);
-  const [viewingId, setViewingId] = useState(null); // ⬅️ new: lock the View button per item
 
-  const handleQuantityChange = (id, qty) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Number(qty),
-    }));
-  };
+  const isPremium = (item) =>
+    item.is_premium !== undefined ? !!item.is_premium : Number(item.price) > 0;
+
+  const priceToDollars = (cents) => (Number(cents || 0) / 100).toFixed(2);
+
+  // --- Categorize ---
+  const freeItems = items.filter((i) => !isPremium(i)); // free
+  const purchasedItems = items.filter((i) => i.purchased); // bought
+  const exploreItems = items.filter((i) => !i.purchased && isPremium(i)); // buyable
+
+  // --- UI helpers ---
+  const Badge = ({ color, children }) => (
+    <span
+      className="badge"
+      style={{
+        color: '#fff',
+        background: color === 'green' ? '#27ae60' : '#f39c12',
+        padding: '2px 6px',
+        borderRadius: '4px',
+        fontSize: '0.8em',
+        marginRight: '8px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
+  );
+
+  const handleQuantityChange = (id, qty) =>
+    setQuantities((prev) => ({ ...prev, [id]: Math.max(1, Number(qty) || 1) }));
 
   const handleBuy = async (item) => {
+    if (loadingItemId === item.id) return;
     const quantity = quantities[item.id] || 1;
     setLoadingItemId(item.id);
+
+    // Build payload; include session_id for live help if present
+    const payload = { quantity: Math.max(1, Number(quantity) || 1) };
+    if (item.is_live_help && item.next_session_id) {
+      payload.session_id = item.next_session_id;
+    }
 
     try {
       const response = await toast.promise(
@@ -31,7 +62,7 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ quantity }),
+          body: JSON.stringify(payload),
         }),
         {
           pending: 'Preparing your checkout…',
@@ -42,58 +73,127 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
       );
 
       const data = await response.json();
-      if (data.url) window.location.assign(data.url);
+      if (data?.url) window.location.assign(data.url);
     } catch (err) {
       console.error('Stripe checkout failed:', err);
-    }
-  };
-
-  const handleView = async (contentId) => {
-    // Already viewed or already submitting → do nothing
-    const target = items.find((i) => i.id === contentId);
-    if (!target || target.viewed || viewingId === contentId) return;
-
-    setViewingId(contentId);
-
-    // ✅ Optimistic update
-    setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: true } : it)));
-
-    try {
-      const res = await fetch(`${API_BASE}/api/mark-viewed/${contentId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Unknown error');
-      }
-
-      toast.success('Marked as viewed');
-      // success: keep optimistic state
-
-      // If you also want to OPEN the content, do it here:
-      // window.open(`/content/${contentId}`, '_blank');
-    } catch (err) {
-      console.error('Error marking as viewed:', err);
-      toast.error('Could not update viewed status');
-
-      // ⬅️ Rollback on error
-      setItems((prev) => prev.map((it) => (it.id === contentId ? { ...it, viewed: false } : it)));
     } finally {
-      setViewingId(null);
+      setLoadingItemId(null);
     }
   };
 
-  const purchasedItems = items.filter((i) => i.purchased);
-  const unpurchasedItems = items.filter((i) => !i.purchased);
+  // --- Cards ---
+  const FreeCard = ({ item }) => {
+    const to = `/content/${item.slug || item.id}`;
+    return (
+      <div className="content-box">
+        <Link to={to} className="content-card-main">
+          <h4>{item.title}</h4>
+          <p>{item.description}</p>
+          <Badge color="green">FREE</Badge>
+        </Link>
+      </div>
+    );
+  };
+
+  const PurchasedCard = ({ item }) => {
+    const to = `/content/${item.slug || item.id}`;
+    return (
+      <div className="content-box">
+        <Link to={to} className="content-card-main">
+          <h4>{item.title}</h4>
+          <p>{item.description}</p>
+          {item.viewed ? <Badge color="green">VIEWED</Badge> : <Badge color="orange">NEW</Badge>}
+        </Link>
+      </div>
+    );
+  };
+
+  const ExploreCard = ({ item }) => {
+    // Detect Live Help product
+    const isLiveHelp = item.is_live_help === true || item.title === 'Live Help Session';
+    const disabled = loadingItemId === item.id;
+
+    const onCardClick = (e) => {
+      if (e.target.closest?.('.card-controls')) return; // don’t buy if clicking controls
+      handleBuy(item);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleBuy(item);
+      }
+    };
+
+    const hours = quantities[item.id] || 1;
+    const unitPrice = Number(item.price || 0); // cents
+    const total = ((unitPrice / 100) * hours).toFixed(2);
+
+    return (
+      <div
+        className={`content-box ${isLiveHelp ? 'alt' : ''}`}
+        id={isLiveHelp ? 'live-help-card' : undefined}
+        role="button"
+        tabIndex={0}
+        onClick={onCardClick}
+        onKeyDown={onKeyDown}
+        aria-disabled={disabled}
+        style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+      >
+        <div className="content-card-main">
+          <h4>{item.title}</h4>
+          <p>{item.description}</p>
+          <Badge color="orange">PREMIUM</Badge>
+          {!isLiveHelp && <p>Price: ${priceToDollars(item.price)}</p>}
+        </div>
+
+        <div className="card-controls" style={{ marginTop: 8 }}>
+          {isLiveHelp && (
+            <>
+              <label>
+                Hours:&nbsp;
+                <select
+                  value={hours}
+                  onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  aria-label="Select number of hours"
+                >
+                  {[1, 2, 3, 4, 5].map((qty) => (
+                    <option key={qty} value={qty}>
+                      {qty}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p style={{ marginTop: 6 }}>Total: ${total}</p>
+            </>
+          )}
+
+          <button
+            className="buy-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleBuy(item);
+            }}
+            disabled={disabled}
+            aria-busy={disabled}
+          >
+            {disabled ? 'Loading…' : 'Buy'}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
       <div className="tab-buttons">
+        <button
+          className={`tab-button ${tab === 'free' ? 'active-tab' : ''}`}
+          onClick={() => setTab('free')}
+        >
+          Free Lessons
+        </button>
         <button
           className={`tab-button ${tab === 'purchased' ? 'active-tab' : ''}`}
           onClick={() => setTab('purchased')}
@@ -108,109 +208,32 @@ export default function ContentTabs({ tab, setTab, items, setItems }) {
         </button>
       </div>
 
-      {tab === 'purchased' ? (
+      {tab === 'free' && (
+        <div className="content-list">
+          {freeItems.length === 0 ? (
+            <p>No free lessons yet—check Explore for new content!</p>
+          ) : (
+            freeItems.map((item) => <FreeCard key={item.id} item={item} />)
+          )}
+        </div>
+      )}
+
+      {tab === 'purchased' && (
         <div className="content-list">
           {purchasedItems.length === 0 ? (
             <p>You haven’t purchased any content yet.</p>
           ) : (
-            purchasedItems.map((item) => (
-              <div key={item.id} className="content-box">
-                <h4>{item.title}</h4>
-                <p>{item.description}</p>
-
-                {!item.viewed ? (
-                  <span
-                    className="badge badge-warning"
-                    style={{
-                      color: '#fff',
-                      background: '#f39c12',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '0.8em',
-                      marginRight: '8px',
-                    }}
-                  >
-                    NEW
-                  </span>
-                ) : (
-                  <span
-                    className="badge badge-success"
-                    style={{
-                      color: '#fff',
-                      background: '#27ae60',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '0.8em',
-                      marginRight: '8px',
-                    }}
-                  >
-                    VIEWED
-                  </span>
-                )}
-
-                <button
-                  className="view-button"
-                  onClick={() => handleView(item.id)}
-                  disabled={item.viewed || viewingId === item.id}
-                  title={item.viewed ? 'Already viewed' : 'Mark as viewed'}
-                >
-                  {viewingId === item.id ? 'Marking…' : item.viewed ? 'Viewed' : 'Mark as viewed'}
-                </button>
-              </div>
-            ))
+            purchasedItems.map((item) => <PurchasedCard key={item.id} item={item} />)
           )}
         </div>
-      ) : (
-        <div className="tab-content">
-          {unpurchasedItems.length === 0 ? (
-            <p style={{ fontStyle: 'italic', color: '#888' }}>
-              🎉 You’ve purchased all current content. Stay tuned for new content coming soon!
-            </p>
-          ) : (
-            unpurchasedItems.map((item) => (
-              <div
-                key={item.id}
-                className="content-box alt"
-                id={item.title === 'Live Help Session' ? 'live-help-card' : undefined}
-              >
-                <h4>{item.title}</h4>
-                <p>{item.description}</p>
+      )}
 
-                {item.title === 'Live Help Session' ? (
-                  <>
-                    <label>
-                      Hours:&nbsp;
-                      <select
-                        value={quantities[item.id] || 1}
-                        onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                      >
-                        {[1, 2, 3, 4, 5].map((qty) => (
-                          <option key={qty} value={qty}>
-                            {qty}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <p>Total: ${((item.price / 100) * (quantities[item.id] || 1)).toFixed(2)}</p>
-                    <button
-                      className="buy-button"
-                      onClick={() => handleBuy(item)}
-                      disabled={loadingItemId === item.id}
-                    >
-                      {loadingItemId === item.id ? 'Loading...' : 'Buy Live Help'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="buy-button"
-                    onClick={() => handleBuy(item)}
-                    disabled={loadingItemId === item.id}
-                  >
-                    {loadingItemId === item.id ? 'Loading...' : `Buy for $${item.price / 100}`}
-                  </button>
-                )}
-              </div>
-            ))
+      {tab === 'explore' && (
+        <div className="tab-content">
+          {exploreItems.length === 0 ? (
+            <p style={{ fontStyle: 'italic', color: '#888' }}>🎉 You own everything—for now!</p>
+          ) : (
+            exploreItems.map((item) => <ExploreCard key={item.id} item={item} />)
           )}
         </div>
       )}

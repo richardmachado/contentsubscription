@@ -6,6 +6,7 @@ import Dashboard from './Pages/Dashboard';
 import AdminDashboard from './Pages/AdminDashboard';
 import Subscribe from './Components/Subscribe';
 import Login from './Components/Login';
+import LessonPage from './Pages/LessonPage';
 import NodeGuide from './RealContent/NodeGuide';
 import ProtectedRoute from './Components/ProtectedRoute';
 import LoggedOutRoute from './Components/LoggedOutRoute';
@@ -72,6 +73,7 @@ function AppRoutes() {
           element={
             <ProtectedRoute redirectTo="/login">
               <Subscribe />
+              <LessonPage />
             </ProtectedRoute>
           }
         />

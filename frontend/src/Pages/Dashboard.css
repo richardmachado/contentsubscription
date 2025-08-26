@@ -101,7 +101,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 11;
+
   position: relative; /* ensure it's a positioning context */
   z-index: 1000;
 }
@@ -212,7 +212,6 @@ input[type='tel'] {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  transform: translateX(-50%);
   background: #4caf50;
   color: white;
   padding: 12px 24px;
@@ -361,4 +360,112 @@ input[type='tel'] {
 .buy-button[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* make the whole card clickable with no underlines */
+.content-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.content-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.content-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef;
+}
+.badge.lock {
+  background: #fee;
+}
+.badge.free {
+  background: #efe;
+}
+.lesson-page .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.locked {
+  background: #fff8f0;
+  border: 1px solid #ffe1c5;
+  padding: 16px;
+  border-radius: 8px;
+}
+.btn {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* App.css */
+.content-card-main {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.content-card-main:hover h4 {
+  text-decoration: underline;
+}
+
+/* App.css */
+.content-card-main {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.content-box[role='button']:hover h4 {
+  text-decoration: underline;
+}
+
+.free-content-rail {
+  margin: 24px 0 8px;
+}
+.free-rail-title {
+  margin: 0 0 12px;
+}
+.free-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.free-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+.guide-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+.guide-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+.free-pill {
+  display: inline-block;
+  background: #e7f7ec;
+  color: #2e7d32;
+  border: 1px solid #cfead7;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
 }

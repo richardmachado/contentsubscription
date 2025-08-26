@@ -1,5 +1,5 @@
 // server.js
-require('dotenv').config() //{ override: true });
+require('dotenv').config(); //{ override: true });
 
 /* ============== Optional IPv4 DNS patch ============== */
 if (process.env.FORCE_IPV4 === 'true') {
@@ -83,7 +83,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
-
 
 /* ===== Stripe webhook (raw body) — mount BEFORE any json/urlencoded ===== */
 app.use('/webhook', express.raw({ type: 'application/json' }), stripeWebhookRouter);
