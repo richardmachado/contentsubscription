@@ -1,8 +1,10 @@
+// src/Components/ContentTabs.js
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
+// Use CRA/Webpack env to avoid import.meta warnings
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 export default function ContentTabs({ tab, setTab, items }) {
@@ -39,12 +41,18 @@ export default function ContentTabs({ tab, setTab, items }) {
   );
 
   const handleQuantityChange = (id, qty) =>
-    setQuantities((prev) => ({ ...prev, [id]: Number(qty) }));
+    setQuantities((prev) => ({ ...prev, [id]: Math.max(1, Number(qty) || 1) }));
 
   const handleBuy = async (item) => {
     if (loadingItemId === item.id) return;
     const quantity = quantities[item.id] || 1;
     setLoadingItemId(item.id);
+
+    // Build payload; include session_id for live help if present
+    const payload = { quantity: Math.max(1, Number(quantity) || 1) };
+    if (item.is_live_help && item.next_session_id) {
+      payload.session_id = item.next_session_id;
+    }
 
     try {
       const response = await toast.promise(
@@ -54,7 +62,7 @@ export default function ContentTabs({ tab, setTab, items }) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ quantity }),
+          body: JSON.stringify(payload),
         }),
         {
           pending: 'Preparing your checkout…',
@@ -101,7 +109,8 @@ export default function ContentTabs({ tab, setTab, items }) {
   };
 
   const ExploreCard = ({ item }) => {
-    const isLiveHelp = item.title === 'Live Help Session';
+    // Detect Live Help product
+    const isLiveHelp = item.is_live_help === true || item.title === 'Live Help Session';
     const disabled = loadingItemId === item.id;
 
     const onCardClick = (e) => {
@@ -114,6 +123,10 @@ export default function ContentTabs({ tab, setTab, items }) {
         handleBuy(item);
       }
     };
+
+    const hours = quantities[item.id] || 1;
+    const unitPrice = Number(item.price || 0); // cents
+    const total = ((unitPrice / 100) * hours).toFixed(2);
 
     return (
       <div
@@ -139,10 +152,11 @@ export default function ContentTabs({ tab, setTab, items }) {
               <label>
                 Hours:&nbsp;
                 <select
-                  value={quantities[item.id] || 1}
+                  value={hours}
                   onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
+                  aria-label="Select number of hours"
                 >
                   {[1, 2, 3, 4, 5].map((qty) => (
                     <option key={qty} value={qty}>
@@ -151,9 +165,7 @@ export default function ContentTabs({ tab, setTab, items }) {
                   ))}
                 </select>
               </label>
-              <p style={{ marginTop: 6 }}>
-                Total: ${((Number(item.price || 0) / 100) * (quantities[item.id] || 1)).toFixed(2)}
-              </p>
+              <p style={{ marginTop: 6 }}>Total: ${total}</p>
             </>
           )}
 
@@ -164,6 +176,7 @@ export default function ContentTabs({ tab, setTab, items }) {
               handleBuy(item);
             }}
             disabled={disabled}
+            aria-busy={disabled}
           >
             {disabled ? 'Loading…' : 'Buy'}
           </button>

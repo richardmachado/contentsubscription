@@ -15,7 +15,10 @@ import {
   confirmPayment,
 } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import './Dashboard.css'; // adjust to ../Dashboard.css if your CSS lives one folder up
+import './Dashboard.css';
+
+// Price per hour for Live Help (in cents)
+const LIVE_HELP_PRICE_CENTS = Number(process.env.REACT_APP_LIVE_HELP_PRICE_CENTS) || 3000; // default $30/hr
 
 export default function Dashboard() {
   const { token, logout } = useAuth();
@@ -56,21 +59,82 @@ export default function Dashboard() {
 
     const loadCore = async () => {
       const [fetchedItems, fetchedProfile] = await Promise.all([fetchContent(), fetchProfile()]);
-      setItems(fetchedItems);
+      setItems(Array.isArray(fetchedItems) ? fetchedItems : []);
       setProfile(fetchedProfile);
     };
 
-    const loadLiveHelp = async () => {
+    // Try singular route first (matches liveHelpHour.js); fall back to plural if needed.
+    const fetchLiveHelpSessions = async () => {
       try {
-        const { data } = await api.get('/api/live-help-hours', { validateStatus: () => true });
-        if (typeof data === 'string' && data.startsWith('<')) {
-          // HTML means wrong host/route proxied — ignore for UX
-          return;
+        let res = await api.get('/api/live-help-hour', { validateStatus: () => true });
+        if (res?.status === 404) {
+          res = await api.get('/api/live-help-hours', { validateStatus: () => true });
         }
-        setLiveHelpHours(data?.totalHours ?? 0);
-      } catch {
-        // non-critical
+        const data = res?.data;
+        if (!data || typeof data === 'string') {
+          console.warn('[live-help] unexpected response', data);
+          return { sessions: [], totalHours: 0 };
+        }
+        return {
+          sessions: Array.isArray(data.sessions) ? data.sessions : [],
+          totalHours: typeof data.totalHours === 'number' ? data.totalHours : 0,
+        };
+      } catch (e) {
+        console.warn('[live-help] fetch error', e?.message);
+        return { sessions: [], totalHours: 0 };
       }
+    };
+
+    // Always append a product-like Live Help item; decorate it if sessions exist
+    const ensureLiveHelpItem = async () => {
+      const { sessions, totalHours } = await fetchLiveHelpSessions();
+
+      if (typeof totalHours === 'number') setLiveHelpHours(totalHours);
+
+      const now = Date.now();
+      const available = sessions.filter(
+        (s) =>
+          !s.is_cancelled &&
+          new Date(s.ends_at).getTime() > now &&
+          Number(s.spots_booked) < Number(s.capacity)
+      );
+
+      const next = available[0];
+      const remaining = next ? Number(next.capacity) - Number(next.spots_booked) : null;
+
+      setItems((curr) => {
+        // If the card is already present, update its description / session_id
+        const foundIdx = curr.findIndex((i) => i.is_live_help || i.id === 'live_help');
+        if (foundIdx >= 0) {
+          const updated = [...curr];
+          const base = updated[foundIdx];
+          updated[foundIdx] = {
+            ...base,
+            description: next
+              ? `One-on-one help. Next slot: ${new Date(next.starts_at).toLocaleString()} — ${remaining} spot(s) left.`
+              : 'One-on-one help billed per hour. New slots open regularly.',
+            next_session_id: next ? next.id : undefined,
+          };
+          return updated;
+        }
+
+        // Otherwise, add it now (even if no sessions — users can still purchase hours)
+        return [
+          ...curr,
+          {
+            id: 'live_help', // what your /api/buy/:id will receive
+            title: 'Live Help Session',
+            description: next
+              ? `One-on-one help. Next slot: ${new Date(next.starts_at).toLocaleString()} — ${remaining} spot(s) left.`
+              : 'One-on-one help billed per hour. New slots open regularly.',
+            price: LIVE_HELP_PRICE_CENTS, // cents per hour
+            is_premium: true,
+            is_live_help: true,
+            purchased: false,
+            next_session_id: next ? next.id : undefined, // optional; pass through on buy
+          },
+        ];
+      });
     };
 
     const run = async () => {
@@ -105,7 +169,7 @@ export default function Dashboard() {
 
         // Load data for first paint (or refresh after confirmation)
         await loadCore();
-        await loadLiveHelp();
+        await ensureLiveHelpItem();
       } catch (error) {
         console.error('Error loading data:', error);
         toast.error('Could not load your dashboard.');
