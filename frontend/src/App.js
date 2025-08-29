@@ -10,6 +10,7 @@ import LessonPage from './Pages/LessonPage';
 import NodeGuide from './RealContent/NodeGuide';
 import ProtectedRoute from './Components/ProtectedRoute';
 import LoggedOutRoute from './Components/LoggedOutRoute';
+import AdminContent from './Pages/AdminContent';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,6 +27,7 @@ function Navigation() {
     <nav className={navClass}>
       <Link to="/">Dashboard</Link>
       {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
+      {user?.is_admin && <Link to="/admin/content">Content</Link>}
       {user ? (
         <Link to="/login" onClick={logout}>
           Logout
@@ -86,6 +88,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/content" element={<AdminContent />} />
 
         {/* Public/free pages */}
         <Route path="/learn-node" element={<NodeGuide />} />

@@ -1,0 +1,11 @@
+.admin-wrap { max-width: 900px; margin: 24px auto; padding: 0 12px; }
+.admin-form .row { display: flex; gap: 12px; margin: 8px 0; align-items: center; }
+.admin-form .row label { width: 160px; font-weight: 600; }
+.admin-form .row input, .admin-form .row textarea { flex: 1; }
+.admin-form .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.admin-form .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.admin-form .err { color: crimson; }
+.actions { display: flex; gap: 8px; margin-top: 12px; }
+.admin-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.admin-table th, .admin-table td { border-bottom: 1px solid #eee; padding: 8px; }
+.admin-table th { text-align: left; }
