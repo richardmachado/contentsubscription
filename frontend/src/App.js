@@ -79,6 +79,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/content/:slugOrId"
+          element={
+            <ProtectedRoute redirectTo="/login">
+              <LessonPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/admin-dashboard"

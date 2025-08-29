@@ -51,6 +51,11 @@ export async function fetchContent() {
   const { data } = await api.get('/api/content');
   return data;
 }
+export const fetchContentBySlug = async (slugOrId) => {
+  const { data } = await api.get(`/api/content/${slugOrId}`);
+  return data;
+};
+
 
 export async function fetchProfile() {
   const { data } = await api.get('/api/profile');
