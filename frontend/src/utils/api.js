@@ -56,7 +56,6 @@ export const fetchContentBySlug = async (slugOrId) => {
   return data;
 };
 
-
 export async function fetchProfile() {
   const { data } = await api.get('/api/profile');
   return data;

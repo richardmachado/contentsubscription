@@ -1,0 +1,36 @@
+/* Override the global .container just on the lesson page */
+.container.lesson-container {
+  max-width: 1200px; /* make it wide on desktop */
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Extra-wide screens? Go a bit larger if you want */
+@media (min-width: 1440px) {
+  .container.lesson-container {
+    max-width: 1280px;
+  }
+}
+
+/* Ensure inner elements don't re-limit width */
+.lesson-article,
+.lesson-body,
+.markdown-body {
+  max-width: 100%;
+}
+
+/* Code blocks: wrap long lines so they don't force side-scroll */
+.lesson-body pre,
+.lesson-body pre code,
+.markdown-body pre,
+.markdown-body pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto; /* keeps scroll if absolutely necessary */
+}
+
+/* If some other CSS is still winning, use !important as a last resort */
+body .container.lesson-container {
+  max-width: 1200px !important;
+}
