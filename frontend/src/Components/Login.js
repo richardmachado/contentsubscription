@@ -2,12 +2,23 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient'; // <-- make sure this exists
 import './Login.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 function Login({ setToken: setTokenProp }) {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
+
+  // When in "forgot" mode, show a simple single-side card.
+  if (mode === 'forgot') {
+    return (
+      <div className="login-container">
+        <ForgotCard onBack={() => setMode('login')} />
+      </div>
+    );
+  }
+
   return (
     <div className="login-container">
       <div className="flip-container">
@@ -20,9 +31,20 @@ function Login({ setToken: setTokenProp }) {
           </div>
         </div>
       </div>
+
       <div className="auth-toggle-wrapper">
         {mode === 'login' ? (
           <>
+            <p className="forgot-link">
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => setMode('forgot')}
+              >
+                Forgot your password?
+              </button>
+            </p>
+
             <p className="auth-toggle-text">Don’t have an account?</p>
             <button onClick={() => setMode('signup')} className="toggle-action-button">
               Create Account
@@ -81,8 +103,8 @@ function FormContent({ mode, setTokenProp }) {
         return handleLoginResponse(data);
       }
 
+      // signup -> auto-login
       if (data.success) {
-        // auto-login after signup
         const loginRes = await fetch(`${API_BASE}/api/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -112,18 +134,14 @@ function FormContent({ mode, setTokenProp }) {
       return;
     }
 
-    // 1) Persist immediately (avoid race)
     try {
       localStorage.setItem('token', data.token);
     } catch {}
 
-    // 2) Update context (sets axios header, user, etc.)
     applyToken(data.token);
 
-    // 3) Navigate back to where we came from (preserve Stripe params)
     const fromPath = location.state?.from?.pathname || '/';
     const fromSearch = location.state?.from?.search || '';
-    // next tick to allow state to flush
     setTimeout(() => navigate(fromPath + fromSearch, { replace: true }), 0);
   };
 
@@ -131,7 +149,7 @@ function FormContent({ mode, setTokenProp }) {
     <div className="login-card">
       <h2>{mode === 'login' ? 'Login' : 'Sign Up'}</h2>
       <input
-        placeholder="Username"
+        placeholder="Username or Email"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
@@ -145,6 +163,52 @@ function FormContent({ mode, setTokenProp }) {
         {mode === 'login' ? 'Login' : 'Sign Up'}
       </button>
       <p style={{ color: 'crimson' }}>{msg}</p>
+    </div>
+  );
+}
+
+/**
+ * Forgot password card (Supabase)
+ * - Sends reset email with a redirect back to /reset-password
+ */
+function ForgotCard({ onBack }) {
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const sendResetEmail = async () => {
+    setSending(true);
+    setMsg('');
+    try {
+      const redirectTo =
+        (window?.location?.origin || 'http://localhost:3000') + '/reset-password';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      setMsg('Check your email for the reset link.');
+    } catch (err) {
+      setMsg(err.message || 'Could not send reset email.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="login-card">
+      <h2>Reset Password</h2>
+      <input
+        type="email"
+        placeholder="Your email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <button onClick={sendResetEmail} className="login-button" disabled={!email || sending}>
+        {sending ? 'Sending…' : 'Send Reset Email'}
+      </button>
+      <p style={{ color: 'crimson', minHeight: 24 }}>{msg}</p>
+      <button type="button" className="link-button" onClick={onBack}>
+        ← Back to login
+      </button>
     </div>
   );
 }

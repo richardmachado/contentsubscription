@@ -10,7 +10,8 @@ import LessonPage from './Pages/LessonPage';
 import NodeGuide from './RealContent/NodeGuide';
 import ProtectedRoute from './Components/ProtectedRoute';
 import LoggedOutRoute from './Components/LoggedOutRoute';
-import AdminContent from './Pages/AdminContent';
+import AdminContent from './Pages/AdminContent'; import ResetPassword from './Components/ResetPassword';
+
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -97,6 +98,9 @@ function AppRoutes() {
           }
         />
         <Route path="/admin/content" element={<AdminContent />} />
+
+
+<Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Public/free pages */}
         <Route path="/learn-node" element={<NodeGuide />} />
