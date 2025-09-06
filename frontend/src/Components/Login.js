@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../supabaseClient'; // <-- make sure this exists
 import './Login.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
@@ -10,7 +9,6 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
 function Login({ setToken: setTokenProp }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
 
-  // When in "forgot" mode, show a simple single-side card.
   if (mode === 'forgot') {
     return (
       <div className="login-container">
@@ -36,11 +34,7 @@ function Login({ setToken: setTokenProp }) {
         {mode === 'login' ? (
           <>
             <p className="forgot-link">
-              <button
-                type="button"
-                className="link-button"
-                onClick={() => setMode('forgot')}
-              >
+              <button type="button" className="link-button" onClick={() => setMode('forgot')}>
                 Forgot your password?
               </button>
             </p>
@@ -168,8 +162,8 @@ function FormContent({ mode, setTokenProp }) {
 }
 
 /**
- * Forgot password card (Supabase)
- * - Sends reset email with a redirect back to /reset-password
+ * Forgot password card (custom backend)
+ * Calls POST /api/forgot-password which sends the email with a /reset-password link
  */
 function ForgotCard({ onBack }) {
   const [email, setEmail] = useState('');
@@ -180,12 +174,15 @@ function ForgotCard({ onBack }) {
     setSending(true);
     setMsg('');
     try {
-      const redirectTo =
-        (window?.location?.origin || 'http://localhost:3000') + '/reset-password';
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) throw error;
-      setMsg('Check your email for the reset link.');
+      const res = await fetch(`${API_BASE}/api/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      // Always shows a generic success to prevent account enumeration
+      if (!res.ok) throw new Error(data?.error || 'Could not send reset email.');
+      setMsg(data?.message || 'If that email exists, a reset link has been sent.');
     } catch (err) {
       setMsg(err.message || 'Could not send reset email.');
     } finally {
