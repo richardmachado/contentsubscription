@@ -195,7 +195,7 @@ router.get('/:slugOrId', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-} );
+});
 
 // ---- ADMIN GUARD ----
 function requireAdmin(req, res, next) {
@@ -238,7 +238,19 @@ router.post('/', requireAdmin, async (req, res, next) => {
             updated_at = now()
       RETURNING *
       `,
-      [slug, title, description, body_md, price, published, sort_order, thumbnail_url, duration_min, level, JSON.stringify(tags)]
+      [
+        slug,
+        title,
+        description,
+        body_md,
+        price,
+        published,
+        sort_order,
+        thumbnail_url,
+        duration_min,
+        level,
+        JSON.stringify(tags),
+      ]
     );
 
     res.status(201).json(rows[0]);
@@ -256,8 +268,17 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     const { id } = req.params;
 
     const fields = [
-      'slug','title','description','body_md','price','published',
-      'sort_order','thumbnail_url','duration_min','level','tags'
+      'slug',
+      'title',
+      'description',
+      'body_md',
+      'price',
+      'published',
+      'sort_order',
+      'thumbnail_url',
+      'duration_min',
+      'level',
+      'tags',
     ];
     const sets = [];
     const values = [];
@@ -300,6 +321,5 @@ router.delete('/:id', requireAdmin, async (req, res, next) => {
     next(err);
   }
 });
-
 
 module.exports = router;

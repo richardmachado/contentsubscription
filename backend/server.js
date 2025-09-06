@@ -98,6 +98,7 @@ app.use(optionalAuth);
 
 // Public auth endpoints (register/login)
 app.use('/api', authRoutes);
+app.use('/api', require('./routes/passwordReset'));
 
 // Protected user routes
 app.use('/api/profile', requireAuth, profileRoutes);

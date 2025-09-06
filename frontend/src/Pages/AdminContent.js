@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+// src/Pages/AdminContent.jsx
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../utils/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './adminContent.css';
 
 const emptyForm = {
@@ -22,13 +25,18 @@ export default function AdminContent() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState('edit'); // 'edit' | 'preview'
 
   const load = async () => {
     try {
+      setLoading(true);
       const { data } = await api.get('/api/content');
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
     } catch (e) {
       setError('Failed to load content');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,22 +44,30 @@ export default function AdminContent() {
     load();
   }, []);
 
-  const onEdit = (it) => {
-    setForm({
-      id: it.id,
-      slug: it.slug || '',
-      title: it.title || '',
-      description: it.description || '',
-      body_md: it.body_md || '',
-      price: Number(it.price || 0),
-      published: !!it.published,
-      sort_order: Number(it.sort_order || 100),
-      thumbnail_url: it.thumbnail_url || '',
-      duration_min: it.duration_min ?? '',
-      level: it.level || '',
-      tags: Array.isArray(it.tags) ? it.tags.join(',') : it.tags || '',
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Fetch the full record (includes body_md) before populating the form
+  const onEdit = async (it) => {
+    try {
+      setError('');
+      const { data: full } = await api.get(`/api/content/${it.id}`);
+      setForm({
+        id: full.id,
+        slug: full.slug || '',
+        title: full.title || '',
+        description: full.description || '',
+        body_md: full.body_md || '',
+        price: Number(full.price || 0),
+        published: !!full.published,
+        sort_order: Number(full.sort_order || 100),
+        thumbnail_url: full.thumbnail_url || '',
+        duration_min: full.duration_min ?? '',
+        level: full.level || '',
+        tags: Array.isArray(full.tags) ? full.tags.join(',') : full.tags || '',
+      });
+      setTab('edit');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      setError('Could not load full content for editing.');
+    }
   };
 
   const onDelete = async (id) => {
@@ -91,6 +107,7 @@ export default function AdminContent() {
 
       setForm(emptyForm);
       await load();
+      setTab('edit');
     } catch (e) {
       setError(e?.response?.data?.error || 'Save failed');
     } finally {
@@ -98,151 +115,217 @@ export default function AdminContent() {
     }
   };
 
-  const cancelEdit = () => setForm(emptyForm);
+  const cancelEdit = () => {
+    setForm(emptyForm);
+    setError('');
+    setTab('edit');
+  };
+
+  // Small debounce for preview so typing feels responsive
+  const [previewText, setPreviewText] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setPreviewText(form.body_md || ''), 200);
+    return () => clearTimeout(t);
+  }, [form.body_md]);
 
   return (
     <div className="admin-wrap">
       <h1>Content Admin</h1>
 
-      <form className="admin-form" onSubmit={submit}>
-        <div className="row">
-          <label>Slug</label>
-          <input
-            value={form.slug}
-            onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            required
-          />
-        </div>
-        <div className="row">
-          <label>Title</label>
-          <input
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-        </div>
-        <div className="row">
-          <label>Description</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </div>
-        <div className="row">
-          <label>Body (Markdown)</label>
-          <textarea
-            className="mono"
-            rows={10}
-            value={form.body_md}
-            onChange={(e) => setForm({ ...form, body_md: e.target.value })}
-          />
-        </div>
-
-        <div className="grid">
-          <div className="row">
-            <label>Price (cents)</label>
-            <input
-              type="number"
-              min="0"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
-          </div>
-          <div className="row">
-            <label>Published</label>
-            <input
-              type="checkbox"
-              checked={form.published}
-              onChange={(e) => setForm({ ...form, published: e.target.checked })}
-            />
-          </div>
-          <div className="row">
-            <label>Sort Order</label>
-            <input
-              type="number"
-              value={form.sort_order}
-              onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
-            />
-          </div>
-          <div className="row">
-            <label>Duration (min)</label>
-            <input
-              type="number"
-              min="0"
-              value={form.duration_min}
-              onChange={(e) => setForm({ ...form, duration_min: e.target.value })}
-            />
-          </div>
-          <div className="row">
-            <label>Level</label>
-            <input
-              value={form.level}
-              onChange={(e) => setForm({ ...form, level: e.target.value })}
-              placeholder="beginner | intermediate | advanced"
-            />
-          </div>
-          <div className="row">
-            <label>Tags (comma separated)</label>
-            <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
-          </div>
-          <div className="row">
-            <label>Thumbnail URL</label>
-            <input
-              value={form.thumbnail_url}
-              onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
-            />
-          </div>
-        </div>
-
-        {error && <p className="err">{error}</p>}
-
-        <div className="actions">
-          <button type="submit" disabled={saving}>
-            {form.id ? 'Update' : 'Create'}
+      <div className="editor-card">
+        <div className="tabs">
+          <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>
+            ✏️ Edit
           </button>
-          {form.id && (
-            <button type="button" onClick={cancelEdit}>
-              Cancel
-            </button>
-          )}
+          <button className={tab === 'preview' ? 'active' : ''} onClick={() => setTab('preview')}>
+            👁️ Preview
+          </button>
         </div>
-      </form>
+
+        <form
+          className={`admin-form two-col ${tab === 'edit' ? 'show-edit' : 'show-preview'}`}
+          onSubmit={submit}
+        >
+          {/* LEFT: Editor */}
+          <div className="pane edit-pane">
+            <div className="row">
+              <label>Slug</label>
+              <input
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                required
+              />
+            </div>
+            <div className="row">
+              <label>Title</label>
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="row">
+              <label>Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+            <div className="row">
+              <label>Body (Markdown)</label>
+              <textarea
+                className="mono"
+                rows={14}
+                value={form.body_md}
+                onChange={(e) => setForm({ ...form, body_md: e.target.value })}
+                placeholder="# Heading\n\nWrite Markdown here…"
+              />
+            </div>
+
+            <div className="grid">
+              <div className="row">
+                <label>Price (cents)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
+              <div className="row checkbox">
+                <label>Published</label>
+                <input
+                  type="checkbox"
+                  checked={form.published}
+                  onChange={(e) => setForm({ ...form, published: e.target.checked })}
+                />
+              </div>
+              <div className="row">
+                <label>Sort Order</label>
+                <input
+                  type="number"
+                  value={form.sort_order}
+                  onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+                />
+              </div>
+              <div className="row">
+                <label>Duration (min)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.duration_min}
+                  onChange={(e) => setForm({ ...form, duration_min: e.target.value })}
+                />
+              </div>
+              <div className="row">
+                <label>Level</label>
+                <input
+                  value={form.level}
+                  onChange={(e) => setForm({ ...form, level: e.target.value })}
+                  placeholder="beginner | intermediate | advanced"
+                />
+              </div>
+              <div className="row">
+                <label>Tags (comma separated)</label>
+                <input
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                />
+              </div>
+              <div className="row">
+                <label>Thumbnail URL</label>
+                <input
+                  value={form.thumbnail_url}
+                  onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {error && <p className="err">{error}</p>}
+
+            <div className="actions">
+              <button type="submit" disabled={saving}>
+                {form.id ? 'Update' : 'Create'}
+              </button>
+              {form.id && (
+                <button type="button" onClick={cancelEdit}>
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setTab(tab === 'edit' ? 'preview' : 'edit')}
+                style={{ marginLeft: 'auto' }}
+              >
+                {tab === 'edit' ? 'Show Preview →' : '← Back to Edit'}
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: Live Preview */}
+          <div className="pane preview-pane">
+            <div className="preview-header">
+              <div>
+                <div className="preview-title">{form.title || 'Untitled Lesson'}</div>
+                <div className="preview-sub">{form.description || 'No description yet.'}</div>
+              </div>
+              {Number(form.price || 0) > 0 && <span className="pill">Premium</span>}
+            </div>
+
+            <div className="markdown-preview">
+              {previewText ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewText}</ReactMarkdown>
+              ) : (
+                <div className="placeholder">
+                  Start typing Markdown in the editor to see a live preview here.
+                </div>
+              )}
+            </div>
+          </div>
+        </form>
+      </div>
 
       <h2 style={{ marginTop: 32 }}>Existing Lessons</h2>
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Slug</th>
-            <th>Price</th>
-            <th>Published</th>
-            <th>Updated</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((it) => (
-            <tr key={it.id}>
-              <td>{it.title}</td>
-              <td>{it.slug}</td>
-              <td>{Number(it.price || 0)}</td>
-              <td>{it.published ? 'Yes' : 'No'}</td>
-              <td>{new Date(it.updated_at || it.created_at).toLocaleString()}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>
-                <button onClick={() => onEdit(it)}>Edit</button>{' '}
-                <button onClick={() => onDelete(it.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-          {items.length === 0 && (
+
+      {loading ? (
+        <p>Loading…</p>
+      ) : (
+        <table className="admin-table">
+          <thead>
             <tr>
-              <td colSpan="6" style={{ textAlign: 'center', color: '#888' }}>
-                No lessons yet.
-              </td>
+              <th>Title</th>
+              <th>Slug</th>
+              <th>Price</th>
+              <th>Published</th>
+              <th>Updated</th>
+              <th />
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((it) => (
+              <tr key={it.id}>
+                <td>{it.title}</td>
+                <td>{it.slug}</td>
+                <td>{Number(it.price || 0)}</td>
+                <td>{it.published ? 'Yes' : 'No'}</td>
+                <td>{new Date(it.updated_at || it.created_at).toLocaleString()}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button onClick={() => onEdit(it)}>Edit</button>{' '}
+                  <button onClick={() => onDelete(it.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+            {items.length === 0 && (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', color: '#888' }}>
+                  No lessons yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
