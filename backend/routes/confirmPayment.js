@@ -5,7 +5,7 @@ const Stripe = require('stripe');
 const { query } = require('../db');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const LIVE_HELP_PRICE_CENTS = Number(process.env.LIVE_HELP_PRICE_CENTS) || 3000;
+const LIVE_HELP_PRICE_CENTS = Number(process.env.LIVE_HELP_PRICE_CENTS) || 5000;
 
 function isUUID(s) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);

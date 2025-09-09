@@ -5,21 +5,28 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './Pages/Dashboard';
 import AdminDashboard from './Pages/AdminDashboard';
 import Subscribe from './Components/Subscribe';
-import Login from './Components/Login';
 import LessonPage from './Pages/LessonPage';
-import NodeGuide from './RealContent/NodeGuide';
+
+import Landing from './Pages/Landing'; // <-- Landing page that embeds <Login />
+import Login from './Components/Login'; // (kept just in case you want a standalone route later)
+
 import ProtectedRoute from './Components/ProtectedRoute';
 import LoggedOutRoute from './Components/LoggedOutRoute';
+
 import AdminContent from './Pages/AdminContent';
 import ResetPassword from './Components/ResetPassword';
+
+import JSDataTypesGuide from './RealContent/JSDataTypes';
+import NodeGuide from './RealContent/NodeGuide';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
-import JSDataTypesGuide from './RealContent/JSDataTypes';
-import LandingPage from './Pages/LandingPage';
 
+// ----------------------------------------
+// Simple top navigation (optional)
+// ----------------------------------------
 function Navigation() {
   const { user, logout } = useAuth();
   const navClass = user?.is_admin ? 'navbar admin-navbar' : 'navbar';
@@ -40,24 +47,29 @@ function Navigation() {
   );
 }
 
+// ----------------------------------------
+// Routes
+// ----------------------------------------
 function AppRoutes() {
   const { user, login } = useAuth();
 
   return (
     <>
       <Navigation />
+
       <Routes>
-        {/* Public login page (but redirect to "/" if already logged in) */}
+        {/* Public: Landing experience at /login (redirect to "/" if already logged in) */}
         <Route
           path="/login"
           element={
             <LoggedOutRoute redirectTo="/">
-              <Login setToken={login} />
+              <Landing />{' '}
+              {/* <Landing /> should import and render your existing <Login /> inside it */}
             </LoggedOutRoute>
           }
         />
 
-        {/* Option A: Dashboard is the home page so Stripe can return to "/" */}
+        {/* Protected home: Dashboard at "/" so Stripe can return here */}
         <Route
           path="/"
           element={
@@ -80,6 +92,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/content/:slugOrId"
           element={
@@ -97,16 +110,22 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route path="/admin/content" element={<AdminContent />} />
 
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/admin/content"
+          element={
+            <ProtectedRoute redirectTo="/login">
+              <AdminContent />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Public/free pages */}
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/learn-node" element={<NodeGuide />} />
         <Route path="/data-types" element={<JSDataTypesGuide />} />
-        <Route path="/home" element={<LandingPage />} />
 
-        {/* Catch-all → home */}
+        {/* Catch-all → home (protected) */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
@@ -115,6 +134,9 @@ function AppRoutes() {
   );
 }
 
+// ----------------------------------------
+// App root
+// ----------------------------------------
 export default function App() {
   return (
     <AuthProvider>

@@ -11,7 +11,7 @@ const DEFAULT_CURRENCY = process.env.DEFAULT_CURRENCY || 'usd';
 const PRICE_UNITS = process.env.PRICE_UNITS || 'cents';
 
 // Live Help config — price in CENTS per hour
-const LIVE_HELP_PRICE_CENTS = Number(process.env.LIVE_HELP_PRICE_CENTS) || 3000; // $30/hr default
+const LIVE_HELP_PRICE_CENTS = Number(process.env.LIVE_HELP_PRICE_CENTS) || 5000; // $50/hr default
 const LIVE_HELP_TITLE = process.env.LIVE_HELP_TITLE || 'Live Help Session';
 
 const isUUID = (s) =>
