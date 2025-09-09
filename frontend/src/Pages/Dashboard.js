@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 // Price per hour for Live Help (in cents)
-const LIVE_HELP_PRICE_CENTS = Number(process.env.REACT_APP_LIVE_HELP_PRICE_CENTS) || 3000; // default $30/hr
+const LIVE_HELP_PRICE_CENTS = Number(process.env.REACT_APP_LIVE_HELP_PRICE_CENTS) || 5000; // default $50/hr
 
 export default function Dashboard() {
   const { token, logout } = useAuth();
