@@ -180,6 +180,18 @@ export default function Dashboard() {
     // eslint-disable-next-line
   }, []);
 
+  // Helper to open default mail client (same tab to avoid blank windows)
+const handleEmailMe = () => {
+  const to = 'programmingwithrick@gmail.com';
+  const subject = 'Meeting Request';
+  const body = 'Hi, I purchased a live session and I would like to schedule a time to meet for our live session.';
+  const gmailCompose = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+    to
+  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(gmailCompose, '_blank', 'noopener,noreferrer');
+};
+
+
   return (
     <div className="container">
       <div className="header">
@@ -207,11 +219,8 @@ export default function Dashboard() {
             💳 Buy Live Help Hours 🧑‍💻
           </button>
         ) : (
-          <button
-            className="book-session-button"
-            onClick={() => window.open('https://calendly.com/rich92105/15min', '_blank')}
-          >
-            📅 Book a Live Session 🧑‍💻
+          <button className="book-session-button" onClick={handleEmailMe}>
+            📧 Email me to Book 🧑‍💻
           </button>
         )}
       </div>
