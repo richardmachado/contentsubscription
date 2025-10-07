@@ -181,16 +181,16 @@ export default function Dashboard() {
   }, []);
 
   // Helper to open default mail client (same tab to avoid blank windows)
-const handleEmailMe = () => {
-  const to = 'programmingwithrick@gmail.com';
-  const subject = 'Meeting Request';
-  const body = 'Hi, I purchased a live session and I would like to schedule a time to meet for our live session.';
-  const gmailCompose = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-    to
-  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.open(gmailCompose, '_blank', 'noopener,noreferrer');
-};
-
+  const handleEmailMe = () => {
+    const to = 'programmingwithrick@gmail.com';
+    const subject = 'Meeting Request';
+    const body =
+      'Hi, I purchased a live session and I would like to schedule a time to meet for our live session.';
+    const gmailCompose = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      to
+    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailCompose, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="container">
