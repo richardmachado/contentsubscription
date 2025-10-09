@@ -36,6 +36,7 @@ async function sendResetEmail({ to, resetUrl }) {
       <p>We received a request to reset your password.</p>
       <p><a href="${resetUrl}">Click here to reset your password</a></p>
       <p>If you didn't request this, you can ignore this email.</p>
+      <p>Do not reply to this email. Responses will not be recieved</p>
     `,
     // optional: have replies go to your Gmail
     // replyTo: 'programmingwithrick@gmail.com',
@@ -87,7 +88,10 @@ router.post('/forgot-password', async (req, res, next) => {
       }
     }
 
-    return res.json({ ok: true, message: 'If that email exists, a reset link has been sent.' });
+    return res.json({
+      ok: true,
+      message: 'If that email exists, a reset link has been sent.\n\nCheck spam folder if not main inbox',
+    });
   } catch (err) {
     next(err);
   }

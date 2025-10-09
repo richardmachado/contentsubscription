@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
+import './Spinner.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
@@ -61,13 +62,14 @@ function FormContent({ mode, setTokenProp }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { login: loginCtx, token, bootstrapped } = useAuth();
 
   const applyToken = setTokenProp || loginCtx;
 
-  // If we somehow hit /login while already logged in, bounce to home (+ keep any ?status=...)
   useEffect(() => {
     if (bootstrapped && token) {
       navigate('/' + (location.search || ''), { replace: true });
@@ -75,6 +77,9 @@ function FormContent({ mode, setTokenProp }) {
   }, [bootstrapped, token, location.search, navigate]);
 
   const submit = async () => {
+    if (loading) return;
+    setLoading(true);
+
     const endpoint = mode === 'login' ? '/api/login' : '/api/register';
 
     try {
@@ -97,7 +102,6 @@ function FormContent({ mode, setTokenProp }) {
         return handleLoginResponse(data);
       }
 
-      // signup -> auto-login
       if (data.success) {
         const loginRes = await fetch(`${API_BASE}/api/login`, {
           method: 'POST',
@@ -119,6 +123,8 @@ function FormContent({ mode, setTokenProp }) {
     } catch (err) {
       setMsg('An error occurred. Please try again.');
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -153,18 +159,20 @@ function FormContent({ mode, setTokenProp }) {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <button onClick={submit} className="login-button">
+      <button onClick={submit} className="login-button" disabled={loading}>
+        {loading && <span className="spinner" aria-hidden="true" />}
         {mode === 'login' ? 'Login' : 'Sign Up'}
       </button>
+      {loading && (
+        <p style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
+          Waking the server… this can take a few seconds.
+        </p>
+      )}
       <p style={{ color: 'crimson' }}>{msg}</p>
     </div>
   );
 }
 
-/**
- * Forgot password card (custom backend)
- * Calls POST /api/forgot-password which sends the email with a /reset-password link
- */
 function ForgotCard({ onBack }) {
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState('');
@@ -180,9 +188,11 @@ function ForgotCard({ onBack }) {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      // Always shows a generic success to prevent account enumeration
       if (!res.ok) throw new Error(data?.error || 'Could not send reset email.');
-      setMsg(data?.message || 'If that email exists, a reset link has been sent.');
+      setMsg(
+        data.message ||
+          'If that email exists, a reset link has been sent.\nCheck spam folder if not in inbox'
+      );
     } catch (err) {
       setMsg(err.message || 'Could not send reset email.');
     } finally {
@@ -200,9 +210,10 @@ function ForgotCard({ onBack }) {
         onChange={(e) => setEmail(e.target.value)}
       />
       <button onClick={sendResetEmail} className="login-button" disabled={!email || sending}>
+        {sending && <span className="spinner" aria-hidden="true" />}
         {sending ? 'Sending…' : 'Send Reset Email'}
       </button>
-      <p style={{ color: 'crimson', minHeight: 24 }}>{msg}</p>
+      <p style={{ color: 'crimson', minHeight: 24, whiteSpace: 'pre-line' }}>{msg}</p>
       <button type="button" className="link-button" onClick={onBack}>
         ← Back to login
       </button>
