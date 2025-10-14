@@ -37,11 +37,11 @@ export function setAuthToken(token) {
 // Debug where requests go
 if (process.env.NODE_ENV !== 'production') {
   // eslint-disable-next-line no-console
-  console.log('[API] baseURL =', api.defaults.baseURL);
+  // console.log('[API] baseURL =', api.defaults.baseURL);
 }
 api.interceptors.request.use((cfg) => {
   // eslint-disable-next-line no-console
-  console.log('[API req]', (cfg.baseURL || '') + (cfg.url || ''));
+  // console.log('[API req]', (cfg.baseURL || '') + (cfg.url || ''));
   return cfg;
 });
 

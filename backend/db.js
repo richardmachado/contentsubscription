@@ -18,7 +18,7 @@ let url;
 try {
   url = new URL(connectionString);
   if (DEBUG) {
-    console.log('[DB] host=', JSON.stringify(url.hostname), 'port=', Number(url.port || 5432));
+    console.log('Running: [DB] host=', JSON.stringify(url.hostname), 'port=', Number(url.port || 5432));
   }
 } catch (e) {
   console.error('[DB] Invalid DATABASE_URL:', e.message);
@@ -42,16 +42,16 @@ const ssl = {
 
 // Pick the host we’ll actually connect to
 const hostToUse = hostOverride || originalHost;
-if (DEBUG) {
-  console.log(
-    '[DB] using host =',
-    hostToUse,
-    'SNI =',
-    originalHost,
-    'ssl.rejectUnauthorized =',
-    !sslInsecure
-  );
-}
+// if (DEBUG) {
+//   console.log(
+//     '[DB] using host =',
+//     hostToUse,
+//     'SNI =',
+//     originalHost,
+//     'ssl.rejectUnauthorized =',
+//     !sslInsecure
+//   );
+// }
 
 // Build the pool
 const pool = new Pool({

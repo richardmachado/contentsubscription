@@ -13,7 +13,7 @@ if (process.env.FORCE_IPV4 === 'true') {
     return originalLookup.call(dns, hostname, { ...options, family: 4, all: false }, callback);
   };
   dns.setDefaultResultOrder?.('ipv4first');
-  console.log('IPv4 DNS patch active');
+  // console.log('IPv4 DNS patch active');
 }
 
 const express = require('express');
@@ -61,15 +61,15 @@ if (process.env.NODE_ENV !== 'production') {
   ].forEach((o) => exactOrigins.add(o));
 }
 
-console.log('[CORS] exact:', [...exactOrigins]);
-console.log('[CORS] patterns:', parseList(process.env.ALLOWED_ORIGIN_PATTERNS));
+// console.log('[CORS] exact:', [...exactOrigins]);
+// console.log('[CORS] patterns:', parseList(process.env.ALLOWED_ORIGIN_PATTERNS));
 
 function originCheck(origin, cb) {
   if (!origin) return cb(null, true); // non-browser clients
   const normalized = origin.replace(/\/+$/, '');
   const ok = exactOrigins.has(normalized) || patternRegexes.some((rx) => rx.test(normalized));
   if (!ok) console.warn('[CORS] Blocked origin:', origin);
-  else console.log('[CORS] Allowed origin:', normalized);
+  // else console.log('[CORS] Allowed origin:', normalized);
   cb(null, ok);
 }
 
@@ -129,7 +129,7 @@ app.get('/api/me', requireAuth, (req, res) => res.json({ user: req.user }));
 (async () => {
   try {
     const { rows } = await pool.query('SELECT NOW()');
-    console.log('✅ DB connected. Server time:', rows[0].now);
+    // console.log('✅ DB connected. Server time:', rows[0].now);
   } catch (err) {
     console.error('⚠️ DB check failed (continuing to serve):', err.message);
   }
@@ -146,6 +146,6 @@ app.use((err, req, res, next) => {
 
 /* ============================== Start ================================ */
 if (require.main === module) {
-  app.listen(port, () => console.log(`🚀 Server on http://localhost:${port}`));
+  app.listen(port, () => console.log(`Running: 🚀 Server on http://localhost:${port}`));
 }
 module.exports = app;

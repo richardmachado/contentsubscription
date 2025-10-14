@@ -81,7 +81,7 @@ router.post('/forgot-password', async (req, res, next) => {
       // Send email via Resend (HTTPS, no SMTP ports)
       try {
         const id = await sendResetEmail({ to: user.email, resetUrl });
-        console.log('[mail] Reset email sent', { to: user.email, id });
+        // console.log('[mail] Reset email sent', { to: user.email, id });
       } catch (mailErr) {
         console.error('[mail] Resend error:', mailErr.message);
         // Do not fail the endpoint to avoid leaking which emails exist

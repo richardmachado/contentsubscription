@@ -87,8 +87,8 @@ export default function ContentTabs({ tab, setTab, items }) {
     return (
       <div className="content-box">
         <Link to={to} className="content-card-main">
-          <h4>{item.title}</h4>
-          <p>{item.description}</p>
+          <h4>{item.title}</h4> <div className="desc">{item.description}</div>
+          <br></br>
           <Badge color="green">FREE</Badge>
         </Link>
       </div>
@@ -101,7 +101,8 @@ export default function ContentTabs({ tab, setTab, items }) {
       <div className="content-box">
         <Link to={to} className="content-card-main">
           <h4>{item.title}</h4>
-          <p>{item.description}</p>
+          <div className="desc">{item.description}</div>
+          <br></br>
           {item.viewed ? <Badge color="green">VIEWED</Badge> : <Badge color="orange">NEW</Badge>}
         </Link>
       </div>
@@ -141,7 +142,8 @@ export default function ContentTabs({ tab, setTab, items }) {
       >
         <div className="content-card-main">
           <h4>{item.title}</h4>
-          <p>{item.description}</p>
+          <div className="desc">{item.description}</div>
+          <br></br>
           <Badge color="orange">PREMIUM</Badge>
           {!isLiveHelp && <p>Price: ${priceToDollars(item.price)}</p>}
         </div>
@@ -165,7 +167,7 @@ export default function ContentTabs({ tab, setTab, items }) {
                   ))}
                 </select>
               </label>
-              <p style={{ marginTop: 6 }}>Total: ${total}</p>
+              <p style={{ marginTop: 6, color: '#000' }}>Total: ${total}</p>
             </>
           )}
 

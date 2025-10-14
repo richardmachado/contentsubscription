@@ -1,36 +1,234 @@
-/* Override the global .container just on the lesson page */
+/* ===============================
+   LAYOUT
+   =============================== */
+
+:root {
+  --page-max: 1200px;
+  --content-width: 760px;   /* width of the reading column */
+  --soft-bg: #f7f7f9;       /* card background */
+  --border: #e6e8ee;        /* subtle border/lines */
+  --text: #111;
+  --muted: #555;
+  --accent: #0b5cff;
+}
+
 .container.lesson-container {
-  max-width: 1200px; /* make it wide on desktop */
+  max-width: var(--page-max);
   width: 100%;
   padding-left: 24px;
   padding-right: 24px;
+  margin: 0 auto;
 }
 
-/* Extra-wide screens? Go a bit larger if you want */
 @media (min-width: 1440px) {
-  .container.lesson-container {
-    max-width: 1280px;
-  }
+  .container.lesson-container { max-width: 1280px; }
 }
 
-/* Ensure inner elements don't re-limit width */
-.lesson-article,
-.lesson-body,
-.markdown-body {
-  max-width: 100%;
+/* Card wrapper */
+.lesson-article {
+  background: var(--soft-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.04),
+    0 6px 20px rgba(0,0,0,.06);
+  padding: 28px;
+  margin: 18px auto 48px;
 }
 
-/* Code blocks: wrap long lines so they don't force side-scroll */
+/* Collapse padding a bit on mobile */
+@media (max-width: 640px) {
+  .lesson-article { padding: 18px; }
+}
+
+/* Don’t re-limit widths elsewhere */
+.lesson-body, .markdown-body { max-width: 100%; }
+
+/* ===============================
+   HEADER (title + description)
+   =============================== */
+
+.lesson-title {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(1.8rem, 2.6vw, 2.25rem);
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 6px 0 6px;
+  letter-spacing: .3px;
+}
+
+.lesson-desc {
+  color: #333 !important;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.65;
+  text-align: center;
+  max-width: 700px;
+  margin: 6px auto 18px;
+}
+
+/* Optional “Premium” pill if you use it */
+.premium-pill {
+  display: inline-block;
+  background: #f39c12;
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-top: 6px;
+}
+
+/* Back button */
+.back-btn {
+  background: #2e7d32;
+  color: #fff;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+.back-btn:hover { background: #1b5e20; }
+
+/* ===============================
+   TYPOGRAPHY / “PROSE” STYLES
+   =============================== */
+
+/* Base text */
+.lesson-body.markdown-body {
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+/* Keep the whole reading flow the same width and left-aligned */
+.lesson-body.markdown-body > *:not(pre):not(.table-wrap) {
+  max-width: var(--content-width);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+/* Headings inside markdown */
+.lesson-body.markdown-body h1,
+.lesson-body.markdown-body h2,
+.lesson-body.markdown-body h3,
+.lesson-body.markdown-body h4,
+.lesson-body.markdown-body h5,
+.lesson-body.markdown-body h6 {
+  color: var(--text);
+  margin-top: 1.2rem;
+  margin-bottom: .6rem;
+}
+
+.lesson-body.markdown-body h1 { font-size: 2rem;   font-weight: 700; }
+.lesson-body.markdown-body h2 { font-size: 1.5rem; font-weight: 600; }
+.lesson-body.markdown-body h3 { font-size: 1.25rem;font-weight: 600; }
+
+/* Paragraphs & small text */
+.lesson-body.markdown-body p,
+.lesson-body.markdown-body blockquote,
+.lesson-body.markdown-body figcaption {
+  color: var(--text) !important;
+}
+
+/* Links */
+.lesson-body.markdown-body a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Horizontal rule to separate sections nicely */
+.lesson-body.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 20px auto;
+  max-width: var(--content-width);
+}
+
+/* ===============================
+   LISTS (fix odd indents/centering)
+   =============================== */
+
+.lesson-body.markdown-body ul,
+.lesson-body.markdown-body ol {
+  /* Keep the list aligned with the reading column */
+  max-width: var(--content-width);
+  margin-left: auto;
+  margin-right: auto;
+
+  /* Normal “document” indent */
+  list-style-position: outside;
+  margin-top: .5rem;
+  margin-bottom: .75rem;
+
+  /* One clean indent from the content edge */
+  padding-left: 1.25rem;
+
+  color: var(--text);
+}
+
+.lesson-body.markdown-body li {
+  margin-bottom: .45rem;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+.lesson-body.markdown-body li::marker { color: #666; }
+
+/* ===============================
+   CODE / TABLES
+   =============================== */
+
+/* Inline code */
+.lesson-body.markdown-body code.inline-code {
+  background: #f3f4f6;
+  color: var(--text);
+  padding: .15rem .35rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Code blocks (react-syntax-highlighter provides bg) */
 .lesson-body pre,
 .lesson-body pre code,
 .markdown-body pre,
 .markdown-body pre code {
   white-space: pre-wrap;
   word-break: break-word;
-  overflow-x: auto; /* keeps scroll if absolutely necessary */
+  overflow-x: auto;
 }
 
-/* If some other CSS is still winning, use !important as a last resort */
-body .container.lesson-container {
-  max-width: 1200px !important;
+/* Round corners / spacing around code blocks */
+.lesson-body .hljs {
+  border-radius: 8px;
 }
+.lesson-body pre {
+  max-width: var(--content-width);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+/* Tables */
+.lesson-body.markdown-body .table-wrap { max-width: var(--content-width); margin: 1rem auto; }
+.lesson-body.markdown-body .table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+}
+.lesson-body.markdown-body .table-wrap th,
+.lesson-body.markdown-body .table-wrap td {
+  padding: 8px 10px;
+  border: 1px solid #dcdfe6;
+  text-align: left;
+}
+
+/* ===============================
+   MISC SAFETY
+   =============================== */
+
+body .container.lesson-container { max-width: var(--page-max) !important; }
