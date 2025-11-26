@@ -143,6 +143,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
   }
 });
+//console.log('SUPABASE_URL from env:', process.env.SUPABASE_URL);
 
 /* ============================== Start ================================ */
 if (require.main === module) {

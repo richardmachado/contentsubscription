@@ -18,7 +18,12 @@ let url;
 try {
   url = new URL(connectionString);
   if (DEBUG) {
-    console.log('Running: [DB] host=', JSON.stringify(url.hostname), 'port=', Number(url.port || 5432));
+    console.log(
+      'Running: [DB] host=',
+      JSON.stringify(url.hostname),
+      'port=',
+      Number(url.port || 5432)
+    );
   }
 } catch (e) {
   console.error('[DB] Invalid DATABASE_URL:', e.message);

@@ -90,7 +90,8 @@ router.post('/forgot-password', async (req, res, next) => {
 
     return res.json({
       ok: true,
-      message: 'If that email exists, a reset link has been sent.\n\nCheck spam folder if not main inbox',
+      message:
+        'If that email exists, a reset link has been sent.\n\nCheck spam folder if not main inbox',
     });
   } catch (err) {
     next(err);

@@ -19,7 +19,7 @@ export default function ContentTabs({ tab, setTab, items }) {
 
   // --- Categorize ---
   const freeItems = items.filter((i) => !isPremium(i)); // free
-  const purchasedItems = items.filter((i) => i.purchased); // bought
+ const purchasedItems = items.filter((i) => i.purchased && isPremium(i)); // bought
   const exploreItems = items.filter((i) => !i.purchased && isPremium(i)); // buyable
 
   // --- UI helpers ---
