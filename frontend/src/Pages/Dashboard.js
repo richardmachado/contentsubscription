@@ -195,7 +195,7 @@ export default function Dashboard() {
   return (
     <div className="container">
       <div className="header">
-        <h2>Premium Content</h2>
+     
         <button className="profile-button" onClick={() => setShowModal(true)}>
           ⚙️ Edit profile
         </button>

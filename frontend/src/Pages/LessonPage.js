@@ -137,6 +137,9 @@ export default function LessonPage() {
           </div>
         )}
       </article>
+       <button onClick={() => navigate(-1)} className="back-btn">
+        ← Back
+      </button>
     </div>
   );
 }
