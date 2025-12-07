@@ -37,6 +37,8 @@ router.get('/', async (req, res, next) => {
         c.price,
         c.published,
         c.sort_order,
+        c.created_at,
+        c.updated_at,
         COALESCE((
           SELECT TRUE
             FROM public.purchased_content pc

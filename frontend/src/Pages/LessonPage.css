@@ -4,9 +4,9 @@
 
 :root {
   --page-max: 1200px;
-  --content-width: 760px;   /* width of the reading column */
-  --soft-bg: #f7f7f9;       /* card background */
-  --border: #e6e8ee;        /* subtle border/lines */
+  --content-width: 760px; /* width of the reading column */
+  --soft-bg: #f7f7f9; /* card background */
+  --border: #e6e8ee; /* subtle border/lines */
   --text: #111;
   --muted: #555;
   --accent: #0b5cff;
@@ -21,7 +21,9 @@
 }
 
 @media (min-width: 1440px) {
-  .container.lesson-container { max-width: 1280px; }
+  .container.lesson-container {
+    max-width: 1280px;
+  }
 }
 
 /* Card wrapper */
@@ -30,37 +32,42 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow:
-    0 1px 2px rgba(0,0,0,.04),
-    0 6px 20px rgba(0,0,0,.06);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 20px rgba(0, 0, 0, 0.06);
   padding: 28px;
   margin: 18px auto 48px;
 }
 
 /* Collapse padding a bit on mobile */
 @media (max-width: 640px) {
-  .lesson-article { padding: 18px; }
+  .lesson-article {
+    padding: 18px;
+  }
 }
 
 /* Don’t re-limit widths elsewhere */
-.lesson-body, .markdown-body { max-width: 100%; }
+.lesson-body,
+.markdown-body {
+  max-width: 100%;
+}
 
 /* ===============================
    HEADER (title + description)
    =============================== */
 
 .lesson-title {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: clamp(1.8rem, 2.6vw, 2.25rem);
   font-weight: 700;
   color: var(--text);
   text-align: center;
   margin: 6px 0 6px;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
 }
 
 .lesson-desc {
   color: #333 !important;
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 1.125rem;
   line-height: 1.65;
   text-align: center;
@@ -73,7 +80,7 @@
   display: inline-block;
   background: #f39c12;
   color: #fff;
-  font-size: .85rem;
+  font-size: 0.85rem;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 12px;
@@ -84,13 +91,15 @@
 .back-btn {
   background: #2e7d32;
   color: #fff;
-  padding: .5rem 1rem;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   margin-bottom: 1rem;
 }
-.back-btn:hover { background: #1b5e20; }
+.back-btn:hover {
+  background: #1b5e20;
+}
 
 /* ===============================
    TYPOGRAPHY / “PROSE” STYLES
@@ -99,7 +108,7 @@
 /* Base text */
 .lesson-body.markdown-body {
   color: var(--text);
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 1.05rem;
   line-height: 1.75;
 }
@@ -121,12 +130,21 @@
 .lesson-body.markdown-body h6 {
   color: var(--text);
   margin-top: 1.2rem;
-  margin-bottom: .6rem;
+  margin-bottom: 0.6rem;
 }
 
-.lesson-body.markdown-body h1 { font-size: 2rem;   font-weight: 700; }
-.lesson-body.markdown-body h2 { font-size: 1.5rem; font-weight: 600; }
-.lesson-body.markdown-body h3 { font-size: 1.25rem;font-weight: 600; }
+.lesson-body.markdown-body h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.lesson-body.markdown-body h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.lesson-body.markdown-body h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
 
 /* Paragraphs & small text */
 .lesson-body.markdown-body p,
@@ -162,8 +180,8 @@
 
   /* Normal “document” indent */
   list-style-position: outside;
-  margin-top: .5rem;
-  margin-bottom: .75rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
 
   /* One clean indent from the content edge */
   padding-left: 1.25rem;
@@ -172,11 +190,13 @@
 }
 
 .lesson-body.markdown-body li {
-  margin-bottom: .45rem;
+  margin-bottom: 0.45rem;
   line-height: 1.6;
   font-size: 1.05rem;
 }
-.lesson-body.markdown-body li::marker { color: #666; }
+.lesson-body.markdown-body li::marker {
+  color: #666;
+}
 
 /* ===============================
    CODE / TABLES
@@ -186,9 +206,9 @@
 .lesson-body.markdown-body code.inline-code {
   background: #f3f4f6;
   color: var(--text);
-  padding: .15rem .35rem;
+  padding: 0.15rem 0.35rem;
   border-radius: 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
 /* Code blocks (react-syntax-highlighter provides bg) */
@@ -214,7 +234,10 @@
 }
 
 /* Tables */
-.lesson-body.markdown-body .table-wrap { max-width: var(--content-width); margin: 1rem auto; }
+.lesson-body.markdown-body .table-wrap {
+  max-width: var(--content-width);
+  margin: 1rem auto;
+}
 .lesson-body.markdown-body .table-wrap table {
   width: 100%;
   border-collapse: collapse;
@@ -231,4 +254,6 @@
    MISC SAFETY
    =============================== */
 
-body .container.lesson-container { max-width: var(--page-max) !important; }
+body .container.lesson-container {
+  max-width: var(--page-max) !important;
+}

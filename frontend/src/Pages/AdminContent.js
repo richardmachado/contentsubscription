@@ -1,10 +1,11 @@
 // src/Pages/AdminContent.jsx
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './adminContent.css';
 
+// empty form used to reset UI
 const emptyForm = {
   id: null,
   slug: '',
@@ -26,7 +27,7 @@ export default function AdminContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState('edit'); // 'edit' | 'preview'
+  const [tab, setTab] = useState('edit');
 
   const load = async () => {
     try {
@@ -34,7 +35,7 @@ export default function AdminContent() {
       const { data } = await api.get('/api/content');
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError('Failed to load content');
+      setError('Failed to load content.');
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,7 @@ export default function AdminContent() {
     load();
   }, []);
 
-  // Fetch the full record (includes body_md) before populating the form
+  // fetch full record before editing
   const onEdit = async (it) => {
     try {
       setError('');
@@ -65,7 +66,7 @@ export default function AdminContent() {
       });
       setTab('edit');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
+    } catch {
       setError('Could not load full content for editing.');
     }
   };
@@ -99,17 +100,15 @@ export default function AdminContent() {
           .filter(Boolean),
       };
 
-      if (form.id) {
-        await api.patch(`/api/content/${form.id}`, payload);
-      } else {
-        await api.post('/api/content', payload);
-      }
+      form.id
+        ? await api.patch(`/api/content/${form.id}`, payload)
+        : await api.post('/api/content', payload);
 
       setForm(emptyForm);
       await load();
       setTab('edit');
     } catch (e) {
-      setError(e?.response?.data?.error || 'Save failed');
+      setError(e?.response?.data?.error || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -121,24 +120,25 @@ export default function AdminContent() {
     setTab('edit');
   };
 
-  // Small debounce for preview so typing feels responsive
-  const [previewText, setPreviewText] = useState('');
-  useEffect(() => {
-    const t = setTimeout(() => setPreviewText(form.body_md || ''), 200);
-    return () => clearTimeout(t);
-  }, [form.body_md]);
+  // timestamp converter for postgres format
+  function parsePostgresTimestamp(ts) {
+    if (!ts) return null;
+    const iso = ts.replace(' ', 'T').replace(/\.\d+/, '').replace(/\+00$/, 'Z');
+    return new Date(iso);
+  }
 
   return (
     <div className="admin-wrap">
       <h1>Content Admin</h1>
 
+      {/* ─────────── FORM / EDITOR ─────────── */}
       <div className="editor-card">
         <div className="tabs">
           <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>
             ✏️ Edit
           </button>
           <button className={tab === 'preview' ? 'active' : ''} onClick={() => setTab('preview')}>
-            👁️ Preview
+            👁 Preview
           </button>
         </div>
 
@@ -146,7 +146,7 @@ export default function AdminContent() {
           className={`admin-form two-col ${tab === 'edit' ? 'show-edit' : 'show-preview'}`}
           onSubmit={submit}
         >
-          {/* LEFT: Editor */}
+          {/* LEFT PANEL — EDIT MODE */}
           <div className="pane edit-pane">
             <div className="row">
               <label>Slug</label>
@@ -226,7 +226,7 @@ export default function AdminContent() {
                 />
               </div>
               <div className="row">
-                <label>Tags (comma separated)</label>
+                <label>Tags</label>
                 <input
                   value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
@@ -263,7 +263,7 @@ export default function AdminContent() {
             </div>
           </div>
 
-          {/* RIGHT: Live Preview */}
+          {/* RIGHT PANEL — LIVE MARKDOWN PREVIEW */}
           <div className="pane preview-pane">
             <div className="preview-header">
               <div>
@@ -272,20 +272,18 @@ export default function AdminContent() {
               </div>
               {Number(form.price || 0) > 0 && <span className="pill">Premium</span>}
             </div>
-
             <div className="markdown-preview">
-              {previewText ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewText}</ReactMarkdown>
+              {form.body_md ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.body_md}</ReactMarkdown>
               ) : (
-                <div className="placeholder">
-                  Start typing Markdown in the editor to see a live preview here.
-                </div>
+                <div className="placeholder">Start typing Markdown to preview…</div>
               )}
             </div>
           </div>
         </form>
       </div>
 
+      {/* ─────────────── EXISTING LESSONS TABLE ─────────────── */}
       <h2 style={{ marginTop: 32 }}>Existing Lessons</h2>
 
       {loading ? (
@@ -303,19 +301,28 @@ export default function AdminContent() {
             </tr>
           </thead>
           <tbody>
-            {items.map((it) => (
-              <tr key={it.id}>
-                <td>{it.title}</td>
-                <td>{it.slug}</td>
-                <td>{Number(it.price || 0)}</td>
-                <td>{it.published ? 'Yes' : 'No'}</td>
-                <td>{new Date(it.updated_at || it.created_at).toLocaleString()}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  <button onClick={() => onEdit(it)}>Edit</button>{' '}
-                  <button onClick={() => onDelete(it.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
+            {items.map((it) => {
+              console.log('Record:', it);
+              console.log('created_at:', it.created_at);
+              console.log('updated_at:', it.updated_at);
+
+              const rawDate = it.updated_at ?? it.created_at;
+
+              return (
+                <tr key={it.id}>
+                  <td>{it.title}</td>
+                  <td>{it.slug}</td>
+                  <td>{Number(it.price || 0)}</td>
+                  <td>{it.published ? 'Yes' : 'No'}</td>
+                  <td>{parsePostgresTimestamp(rawDate)?.toLocaleString() || 'No date'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button onClick={() => onEdit(it)}>Edit</button>
+                    <button onClick={() => onDelete(it.id)}>Delete</button>
+                  </td>
+                </tr>
+              );
+            })}
+
             {items.length === 0 && (
               <tr>
                 <td colSpan="6" style={{ textAlign: 'center', color: '#888' }}>
