@@ -292,29 +292,33 @@ export default function AdminContent() {
         <table className="admin-table">
           <thead>
             <tr>
+               <th>Created</th>
+              <th>Sort Order</th>
               <th>Title</th>
               <th>Slug</th>
               <th>Price</th>
-              <th>Published</th>
+          
               <th>Updated</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {items.map((it) => {
-              console.log('Record:', it);
-              console.log('created_at:', it.created_at);
-              console.log('updated_at:', it.updated_at);
+ 
 
-              const rawDate = it.updated_at ?? it.created_at;
+              const rawDate = it.updated_at;
+              const created_date= it.created_at;
 
               return (
                 <tr key={it.id}>
+                  <td>{parsePostgresTimestamp(created_date)?.toLocaleString() || 'No date'}</td>
+                  <td>{it.sort_order}</td>
                   <td>{it.title}</td>
                   <td>{it.slug}</td>
                   <td>{Number(it.price || 0)}</td>
-                  <td>{it.published ? 'Yes' : 'No'}</td>
+                  {/* <td>{it.published ? 'Yes' : 'No'}</td> */}
                   <td>{parsePostgresTimestamp(rawDate)?.toLocaleString() || 'No date'}</td>
+                   
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <button onClick={() => onEdit(it)}>Edit</button>
                     <button onClick={() => onDelete(it.id)}>Delete</button>
