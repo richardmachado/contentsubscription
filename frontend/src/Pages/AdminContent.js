@@ -292,22 +292,20 @@ export default function AdminContent() {
         <table className="admin-table">
           <thead>
             <tr>
-               <th>Created</th>
+              <th>Created</th>
               <th>Sort Order</th>
               <th>Title</th>
               <th>Slug</th>
               <th>Price</th>
-          
+
               <th>Updated</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {items.map((it) => {
- 
-
               const rawDate = it.updated_at;
-              const created_date= it.created_at;
+              const created_date = it.created_at;
 
               return (
                 <tr key={it.id}>
@@ -318,7 +316,6 @@ export default function AdminContent() {
                   <td>{Number(it.price || 0)}</td>
                   {/* <td>{it.published ? 'Yes' : 'No'}</td> */}
                   <td>{parsePostgresTimestamp(rawDate)?.toLocaleString() || 'No date'}</td>
-                   
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <button onClick={() => onEdit(it)}>Edit</button>
                     <button onClick={() => onDelete(it.id)}>Delete</button>
