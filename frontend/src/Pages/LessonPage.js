@@ -14,7 +14,7 @@ import htmlLang from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
 import theme from 'react-syntax-highlighter/dist/esm/styles/hljs/atom-one-dark';
 import './LessonPage.css';
 
-// register languages you'll likely use
+// register languages
 SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('javascript', js);
 SyntaxHighlighter.registerLanguage('ts', ts);
@@ -45,15 +45,24 @@ export default function LessonPage() {
 
   if (err) {
     return (
-      <div className="container">
-        <p style={{ color: 'crimson' }}>{err}</p>
+      <div className="lesson-page-root">
+        <div className="lesson-centered">
+          <p className="lesson-error">{err}</p>
+          <button onClick={() => navigate(-1)} className="back-btn">
+            ← Back
+          </button>
+        </div>
       </div>
     );
   }
+
   if (!item) {
     return (
-      <div className="container">
-        <p>Loading…</p>
+      <div className="lesson-page-root">
+        <div className="lesson-centered">
+          <div className="lesson-skeleton" />
+          <p className="lesson-meta-text">Loading lesson…</p>
+        </div>
       </div>
     );
   }
@@ -61,85 +70,111 @@ export default function LessonPage() {
   const isPremium = Number(item.price || 0) > 0;
 
   return (
-    <div className="container lesson-container">
-      <button onClick={() => navigate(-1)} className="back-btn">
-        ← Back
-      </button>
-
-      <article className="lesson-article">
-        <header className="lesson-header">
-          <h1 className="lesson-title">{item.title}</h1>
-          {item.description ? <p className="lesson-desc">{item.description}</p> : null}
-          {Number(item.price || 0) > 0 && !item.purchased && (
-            <span className="pill premium-pill">Premium</span>
-          )}
-        </header>
-
-        {isPremium && !item.purchased ? (
-          <div className="paywall">
-            <p>This is a premium lesson. Please purchase from the Explore tab.</p>
+    <div className="lesson-page-root">
+      <header className="lesson-topbar">
+        <div className="lesson-topbar-inner">
+          <button onClick={() => navigate(-1)} className="back-btn">
+            ← Back
+          </button>
+          <div className="lesson-topbar-meta">
+            {isPremium && <span className="pill premium-pill">Premium</span>}
+            {item.read_time && <span className="pill meta-pill">{item.read_time} min read</span>}
           </div>
-        ) : (
-          <div className="lesson-body markdown-body">
-            {item.body_md ? (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const lang = match?.[1];
-                    if (!inline) {
+        </div>
+      </header>
+
+      <main className="lesson-main">
+        <article className="lesson-article">
+          <header className="lesson-header">
+            <h1 className="lesson-title">{item.title}</h1>
+            {item.description ? <p className="lesson-desc">{item.description}</p> : null}
+
+            <div className="lesson-header-meta">
+              {item.level && <span className="pill meta-pill">Level: {item.level}</span>}
+              {Array.isArray(item.tags) && item.tags.length > 0 && (
+                <div className="lesson-tags">
+                  {item.tags.map((tag) => (
+                    <span key={tag} className="pill tag-pill">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </header>
+
+          {isPremium && !item.purchased ? (
+            <section className="paywall">
+              <div className="paywall-icon">🔒</div>
+              <h2 className="paywall-title">Premium lesson</h2>
+              <p className="paywall-copy">
+                This lesson is part of the premium library. Purchase it from the
+                <strong> Explore </strong>
+                tab to unlock full content and code examples.
+              </p>
+              <button type="button" className="paywall-cta" onClick={() => navigate('/explore')}>
+                Go to Explore
+              </button>
+            </section>
+          ) : (
+            <section className="lesson-body markdown-body">
+              {item.body_md ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const lang = match?.[1];
+                      if (!inline) {
+                        return (
+                          <SyntaxHighlighter
+                            style={theme}
+                            language={lang || 'plaintext'}
+                            PreTag="div"
+                            customStyle={{ borderRadius: 8, margin: '12px 0' }}
+                            {...props}
+                          >
+                            {String(children).replace(/\n$/, '')}
+                          </SyntaxHighlighter>
+                        );
+                      }
                       return (
-                        <SyntaxHighlighter
-                          style={theme}
-                          language={lang || 'plaintext'}
-                          PreTag="div"
-                          customStyle={{ borderRadius: 8, margin: '12px 0' }}
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
+                        <code className="inline-code" {...props}>
+                          {children}
+                        </code>
                       );
-                    }
-                    return (
-                      <code className="inline-code" {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  a({ children, href, ...props }) {
-                    const isExternal = href && /^https?:\/\//i.test(href);
-                    return (
-                      <a
-                        href={href}
-                        {...props}
-                        target={isExternal ? '_blank' : undefined}
-                        rel={isExternal ? 'noopener noreferrer' : undefined}
-                      >
-                        {children}
-                      </a>
-                    );
-                  },
-                  table({ children }) {
-                    return (
-                      <div className="table-wrap">
-                        <table>{children}</table>
-                      </div>
-                    );
-                  },
-                }}
-              >
-                {item.body_md}
-              </ReactMarkdown>
-            ) : (
-              <h3>Lesson content coming soon…</h3>
-            )}
-          </div>
-        )}
-      </article>
-      <button onClick={() => navigate(-1)} className="back-btn">
-        ← Back
-      </button>
+                    },
+                    a({ children, href, ...props }) {
+                      const isExternal = href && /^https?:\/\//i.test(href);
+                      return (
+                        <a
+                          href={href}
+                          {...props}
+                          target={isExternal ? '_blank' : undefined}
+                          rel={isExternal ? 'noopener noreferrer' : undefined}
+                        >
+                          {children}
+                        </a>
+                      );
+                    },
+                    table({ children }) {
+                      return (
+                        <div className="table-wrap">
+                          <table>{children}</table>
+                        </div>
+                      );
+                    },
+                  }}
+                >
+                  {item.body_md}
+                </ReactMarkdown>
+              ) : (
+                <h3>Lesson content coming soon…</h3>
+              )}
+            </section>
+          )}
+        </article>
+      </main>
     </div>
   );
 }

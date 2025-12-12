@@ -1,0 +1,123 @@
+.landing-root {
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #1e293b, #020617);
+  color: #e2e8f0;
+  padding: 32px 16px;
+}
+
+.landing-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+
+/* 2 columns on md+, single column on small screens */
+@media (min-width: 768px) {
+  .landing-hero {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.landing-copy {
+  max-width: 640px;
+}
+
+.landing-title {
+  font-size: clamp(2.2rem, 3vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.landing-accent {
+  color: #22d3ee;
+}
+
+.landing-subtitle {
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 36rem;
+}
+
+.landing-cta-row {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.landing-cta-primary {
+  background: #22c55e;
+  color: #0f172a;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 600;
+
+  font-size: 0.95rem;
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.12s ease,
+    background 0.15s ease;
+}
+
+.landing-cta-primary:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(34, 197, 94, 0.55);
+}
+
+.landing-cta-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.5);
+}
+
+.landing-cta-note {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.landing-benefits {
+  list-style: none;
+  padding: 0;
+  margin-top: 18px;
+  line-height: 1.9;
+  color: #e2e8f0;
+  font-size: 0.98rem;
+}
+
+.landing-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Login side */
+
+.landing-auth {
+  max-width: 360px;
+  justify-self: center;
+  width: 100%;
+}
+
+.landing-auth-card {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 16px;
+  padding: 20px 18px 22px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  backdrop-filter: blur(18px);
+}
+
+.landing-auth-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  text-align: center;
+}
