@@ -25,6 +25,7 @@ export default function Landing() {
             <li>✔ Mini-challenges & answers</li>
             <li>✔ Premium cheatsheets</li>
             <li>✔ Real projects</li>
+            <li>✔ Live help</li>
           </ul>
         </div>
 
