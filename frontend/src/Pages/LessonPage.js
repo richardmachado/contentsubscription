@@ -14,6 +14,9 @@ import htmlLang from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
 import theme from 'react-syntax-highlighter/dist/esm/styles/hljs/atom-one-dark';
 import './LessonPage.css';
 
+import Quiz from './LessonComponents/Quiz';
+import CodePlayground from './LessonComponents/CodePlayground';
+
 // register languages
 SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('javascript', js);
@@ -25,6 +28,53 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('css', cssLang);
 SyntaxHighlighter.registerLanguage('html', htmlLang);
 SyntaxHighlighter.registerLanguage('xml', htmlLang);
+
+function parseCustomBlocks(md) {
+  const lines = md.split('\n');
+  const parts = [];
+  let buffer = [];
+  let mode = null;
+  let meta = {};
+
+  const flushText = () => {
+    if (buffer.length) {
+      parts.push({ type: 'markdown', content: buffer.join('\n') });
+      buffer = [];
+    }
+  };
+
+  for (const line of lines) {
+    const playMatch = line.match(/^:::playground(.*)/);
+    const quizMatch = line.match(/^:::quiz(.*)/);
+
+    if (playMatch) {
+      flushText();
+      mode = 'playground';
+      meta = {};
+      continue;
+    }
+    if (quizMatch) {
+      flushText();
+      mode = 'quiz';
+      meta = {};
+      continue;
+    }
+    if (line.trim() === ':::') {
+      if (mode && buffer.length) {
+        const content = buffer.join('\n');
+        parts.push({ type: mode, content, meta });
+      }
+      buffer = [];
+      mode = null;
+      meta = {};
+      continue;
+    }
+    buffer.push(line);
+  }
+  flushText();
+  return parts;
+}
+
 
 export default function LessonPage() {
   const { slugOrId } = useParams();
@@ -117,61 +167,106 @@ export default function LessonPage() {
               </button>
             </section>
           ) : (
-            <section className="lesson-body markdown-body">
-              {item.body_md ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    code({ inline, className, children, ...props }) {
-                      const match = /language-(\w+)/.exec(className || '');
-                      const lang = match?.[1];
-                      if (!inline) {
-                        return (
-                          <SyntaxHighlighter
-                            style={theme}
-                            language={lang || 'plaintext'}
-                            PreTag="div"
-                            customStyle={{ borderRadius: 8, margin: '12px 0' }}
-                            {...props}
-                          >
-                            {String(children).replace(/\n$/, '')}
-                          </SyntaxHighlighter>
-                        );
-                      }
-                      return (
-                        <code className="inline-code" {...props}>
-                          {children}
-                        </code>
-                      );
-                    },
-                    a({ children, href, ...props }) {
-                      const isExternal = href && /^https?:\/\//i.test(href);
-                      return (
-                        <a
-                          href={href}
-                          {...props}
-                          target={isExternal ? '_blank' : undefined}
-                          rel={isExternal ? 'noopener noreferrer' : undefined}
-                        >
-                          {children}
-                        </a>
-                      );
-                    },
-                    table({ children }) {
-                      return (
-                        <div className="table-wrap">
-                          <table>{children}</table>
-                        </div>
-                      );
-                    },
-                  }}
-                >
-                  {item.body_md}
-                </ReactMarkdown>
-              ) : (
-                <h3>Lesson content coming soon…</h3>
-              )}
-            </section>
+<section className="lesson-body markdown-body">
+  {item.body_md ? (
+    parseCustomBlocks(item.body_md).map((block, idx) => {
+      if (block.type === 'markdown') {
+        return (
+          <ReactMarkdown
+            key={idx}
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({ inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                const lang = match?.[1];
+                if (!inline) {
+                  return (
+                    <SyntaxHighlighter
+                      style={theme}
+                      language={lang || 'plaintext'}
+                      PreTag="div"
+                      customStyle={{ borderRadius: 8, margin: '12px 0' }}
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  );
+                }
+                return (
+                  <code className="inline-code" {...props}>
+                    {children}
+                  </code>
+                );
+              },
+              a({ children, href, ...props }) {
+                const isExternal = href && /^https?:\/\//i.test(href);
+                return (
+                  <a
+                    href={href}
+                    {...props}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                  >
+                    {children}
+                  </a>
+                );
+              },
+              table({ children }) {
+                return (
+                  <div className="table-wrap">
+                    <table>{children}</table>
+                  </div>
+                );
+              },
+            }}
+          >
+            {block.content}
+          </ReactMarkdown>
+        );
+      }
+
+      if (block.type === 'playground') {
+        return (
+          <CodePlayground
+            key={idx}
+            initialCode={block.content}
+          />
+        );
+      }
+
+      if (block.type === 'quiz') {
+        const lines = block.content.split('\n').filter(Boolean);
+        const qLine = lines.find((l) => l.startsWith('question:')) || '';
+        const oLine = lines.find((l) => l.startsWith('options:')) || '';
+        const aLine = lines.find((l) => l.startsWith('answer:')) || '';
+
+        const question = qLine.replace('question:', '').trim();
+        const options = oLine
+          .replace('options:', '')
+          .split('|')
+          .map((s) => s.trim());
+        const correctIndex = parseInt(
+          aLine.replace('answer:', '').trim(),
+          10
+        );
+
+        return (
+          <Quiz
+            key={idx}
+            question={question}
+            options={options}
+            correctIndex={correctIndex}
+          />
+        );
+      }
+
+      return null;
+    })
+  ) : (
+    <h3>Lesson content coming soon…</h3>
+  )}
+</section>
+
           )}
         </article>
       </main>

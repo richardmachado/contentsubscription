@@ -449,3 +449,86 @@
 body .lesson-page-root {
   width: 100%;
 }
+
+.code-playground {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #0f172a; /* dark slate */
+  border: 1px solid #1e293b;
+}
+
+.playground-prompt {
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.playground-editor {
+  width: 100%;
+  min-height: 140px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #1f2933;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+.playground-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.playground-output {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: #020617;
+  color: #a5b4fc;
+  border: 1px solid #1e293b;
+  font-size: 0.85rem;
+}
+
+.quiz-card {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #0b1120;
+  border: 1px solid #1d283a;
+  color: #e5e7eb; 
+}
+
+.quiz-question {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+color: #f9fafb !important;
+  
+}
+
+.quiz-options {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.quiz-options li {
+  margin-bottom: 0.4rem;
+}
+
+.quiz-options label {
+  color: #e5e7eb;              /* ensures option text is readable */
+}
+
+.quiz-feedback.correct {
+  color: #22c55e;
+}
+
+.quiz-feedback.incorrect {
+  color: #f97373;
+}
+
+.quiz-explanation {
+  color: #cbd5f5;              /* softer accent color */
+}
