@@ -466,7 +466,9 @@ body .lesson-page-root {
 .playground-editor {
   width: 100%;
   min-height: 140px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
   font-size: 0.9rem;
   padding: 0.75rem;
   border-radius: 6px;
@@ -497,14 +499,13 @@ body .lesson-page-root {
   border-radius: 8px;
   background: #0b1120;
   border: 1px solid #1d283a;
-  color: #e5e7eb; 
+  color: #e5e7eb;
 }
 
 .quiz-question {
   font-weight: 600;
   margin-bottom: 0.75rem;
-color: #f9fafb !important;
-  
+  color: #f9fafb !important;
 }
 
 .quiz-options {
@@ -518,7 +519,7 @@ color: #f9fafb !important;
 }
 
 .quiz-options label {
-  color: #e5e7eb;              /* ensures option text is readable */
+  color: #e5e7eb; /* ensures option text is readable */
 }
 
 .quiz-feedback.correct {
@@ -530,5 +531,5 @@ color: #f9fafb !important;
 }
 
 .quiz-explanation {
-  color: #cbd5f5;              /* softer accent color */
+  color: #cbd5f5; /* softer accent color */
 }

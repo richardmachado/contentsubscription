@@ -39,12 +39,14 @@ export default function CodePlayground({ initialCode = '', prompt }) {
         spellCheck="false"
       />
       <div className="playground-actions">
-        <button type="button" onClick={runCode}>Run</button>
-        <button type="button" onClick={reset}>Reset</button>
+        <button type="button" onClick={runCode}>
+          Run
+        </button>
+        <button type="button" onClick={reset}>
+          Reset
+        </button>
       </div>
-      <pre className="playground-output">
-        {output || 'Output will appear here…'}
-      </pre>
+      <pre className="playground-output">{output || 'Output will appear here…'}</pre>
     </div>
   );
 }

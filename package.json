@@ -10,12 +10,11 @@
     "prettier": "^3.6.2"
   },
   "scripts": {
-  "client": "npm start --prefix frontend",
-  "server": "cd backend && nodemon server.js",
-  "dev": "concurrently \"npm run server\" \"npm run client\"",
-  "lint": "eslint 'backend/**/*.js'",
-  "lint:fix": "eslint 'backend/**/*.js' --fix",
-  "format": "prettier --write 'backend/**/*.{js,json}'"
-
+    "client": "npm start --prefix frontend",
+    "server": "cd backend && nodemon server.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "lint": "eslint 'backend/**/*.js'",
+    "lint:fix": "eslint 'backend/**/*.js' --fix",
+    "format": "prettier --write 'backend/**/*.{js,json}'"
   }
 }
