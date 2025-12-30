@@ -12,8 +12,7 @@ const PASSWORD_RULES =
   'Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, 1 number, and 1 symbol.';
 
 function isStrongPassword(pw) {
-  const re =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   return re.test(pw);
 }
 
@@ -45,30 +44,20 @@ function Login({ setToken: setTokenProp }) {
         {mode === 'login' ? (
           <>
             <p className="forgot-link">
-              <button
-                type="button"
-                className="link-button"
-                onClick={() => setMode('forgot')}
-              >
+              <button type="button" className="link-button" onClick={() => setMode('forgot')}>
                 Forgot your password?
               </button>
             </p>
 
             <p className="auth-toggle-text">Don’t have an account?</p>
-            <button
-              onClick={() => setMode('signup')}
-              className="toggle-action-button"
-            >
+            <button onClick={() => setMode('signup')} className="toggle-action-button">
               Create Account
             </button>
           </>
         ) : (
           <>
             <p className="auth-toggle-text">Already registered?</p>
-            <button
-              onClick={() => setMode('login')}
-              className="toggle-action-button"
-            >
+            <button onClick={() => setMode('login')} className="toggle-action-button">
               Back to Login
             </button>
           </>
@@ -188,9 +177,7 @@ function FormContent({ mode, setTokenProp }) {
         onChange={(e) => setPassword(e.target.value)}
       />
       {mode === 'signup' && (
-        <p style={{ marginTop: 4, fontSize: 12, color: '#6b7280' }}>
-          {PASSWORD_RULES}
-        </p>
+        <p style={{ marginTop: 4, fontSize: 12, color: '#6b7280' }}>{PASSWORD_RULES}</p>
       )}
       <button onClick={submit} className="login-button" disabled={loading}>
         {loading && <span className="spinner" aria-hidden="true" />}
@@ -242,11 +229,7 @@ function ForgotCard({ onBack }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <button
-        onClick={sendResetEmail}
-        className="login-button"
-        disabled={!email || sending}
-      >
+      <button onClick={sendResetEmail} className="login-button" disabled={!email || sending}>
         {sending && <span className="spinner" aria-hidden="true" />}
         {sending ? 'Sending…' : 'Send Reset Email'}
       </button>

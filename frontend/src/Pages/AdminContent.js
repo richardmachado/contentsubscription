@@ -5,6 +5,55 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './adminContent.css';
 
+import Quiz from './LessonComponents/Quiz';
+import CodePlayground from './LessonComponents/CodePlayground';
+
+function parseCustomBlocks(md) {
+  const lines = md.split('\n');
+  const parts = [];
+  let buffer = [];
+  let mode = null;
+  let meta = {};
+
+  const flushText = () => {
+    if (buffer.length) {
+      parts.push({ type: 'markdown', content: buffer.join('\n') });
+      buffer = [];
+    }
+  };
+
+  for (const line of lines) {
+    const playMatch = line.match(/^:::playground(.*)/);
+    const quizMatch = line.match(/^:::quiz(.*)/);
+
+    if (playMatch) {
+      flushText();
+      mode = 'playground';
+      meta = {};
+      continue;
+    }
+    if (quizMatch) {
+      flushText();
+      mode = 'quiz';
+      meta = {};
+      continue;
+    }
+    if (line.trim() === ':::') {
+      if (mode && buffer.length) {
+        const content = buffer.join('\n');
+        parts.push({ type: mode, content, meta });
+      }
+      buffer = [];
+      mode = null;
+      meta = {};
+      continue;
+    }
+    buffer.push(line);
+  }
+  flushText();
+  return parts;
+}
+
 // empty form used to reset UI
 const emptyForm = {
   id: null,
@@ -272,9 +321,47 @@ export default function AdminContent() {
               </div>
               {Number(form.price || 0) > 0 && <span className="pill">Premium</span>}
             </div>
-            <div className="markdown-preview">
+
+            <div className="markdown-preview markdown-body">
               {form.body_md ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.body_md}</ReactMarkdown>
+                parseCustomBlocks(form.body_md).map((block, idx) => {
+                  if (block.type === 'markdown') {
+                    return (
+                      <ReactMarkdown key={idx} remarkPlugins={[remarkGfm]}>
+                        {block.content}
+                      </ReactMarkdown>
+                    );
+                  }
+
+                  if (block.type === 'playground') {
+                    return <CodePlayground key={idx} initialCode={block.content} />;
+                  }
+
+                  if (block.type === 'quiz') {
+                    const lines = block.content.split('\n').filter(Boolean);
+                    const qLine = lines.find((l) => l.startsWith('question:')) || '';
+                    const oLine = lines.find((l) => l.startsWith('options:')) || '';
+                    const aLine = lines.find((l) => l.startsWith('answer:')) || '';
+
+                    const question = qLine.replace('question:', '').trim();
+                    const options = oLine
+                      .replace('options:', '')
+                      .split('|')
+                      .map((s) => s.trim());
+                    const correctIndex = parseInt(aLine.replace('answer:', '').trim(), 10);
+
+                    return (
+                      <Quiz
+                        key={idx}
+                        question={question}
+                        options={options}
+                        correctIndex={correctIndex}
+                      />
+                    );
+                  }
+
+                  return null;
+                })
               ) : (
                 <div className="placeholder">Start typing Markdown to preview…</div>
               )}
