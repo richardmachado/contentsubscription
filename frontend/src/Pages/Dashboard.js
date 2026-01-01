@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import ContentTabs from '../Components/ContentTabs';
 import ProfileModal from '../Components/ProfileModal';
 
+
 import {
   api,
   setAuthToken,
@@ -194,6 +195,7 @@ export default function Dashboard() {
 
   return (
     <div className="container">
+        
       <div className="header">
         <button className="profile-button" onClick={() => setShowModal(true)}>
           ⚙️ Edit profile
