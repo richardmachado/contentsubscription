@@ -24,6 +24,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
 
+import { SandboxPage } from './Pages/SandboxPage';
 // ----------------------------------------
 // Simple top navigation (optional)
 // ----------------------------------------
@@ -36,6 +37,8 @@ function Navigation() {
       <Link to="/">Dashboard</Link>
       {user?.is_admin && <Link to="/admin-dashboard">Admin</Link>}
       {user?.is_admin && <Link to="/admin/content">Content</Link>}
+      {user && <Link to="/sandbox">Sandbox</Link>}
+
       {user ? (
         <Link to="/login" onClick={logout}>
           Logout
@@ -124,6 +127,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/learn-node" element={<NodeGuide />} />
         <Route path="/data-types" element={<JSDataTypesGuide />} />
+        <Route path="/sandbox" element={<SandboxPage />} />
 
         {/* Catch-all → home (protected) */}
         <Route path="*" element={<Navigate to="/" replace />} />
